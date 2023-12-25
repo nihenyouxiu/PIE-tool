@@ -1,0 +1,19 @@
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\bin\Release\net8.0-windows\LED bincard.exe
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\bin\Release\net8.0-windows\LED bincard.deps.json
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\bin\Release\net8.0-windows\LED bincard.runtimeconfig.json
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\bin\Release\net8.0-windows\LED bincard.dll
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\bin\Release\net8.0-windows\LED bincard.pdb
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\obj\Release\net8.0-windows\MainWindow.baml
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\obj\Release\net8.0-windows\MainWindow.g.cs
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\obj\Release\net8.0-windows\App.g.cs
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\obj\Release\net8.0-windows\LED bincard_MarkupCompile.cache
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\obj\Release\net8.0-windows\LED bincard.g.resources
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\obj\Release\net8.0-windows\LED bincard.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\obj\Release\net8.0-windows\LED bincard.AssemblyInfoInputs.cache
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\obj\Release\net8.0-windows\LED bincard.AssemblyInfo.cs
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\obj\Release\net8.0-windows\LED bincard.csproj.CoreCompileInputs.cache
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\obj\Release\net8.0-windows\LED bincard.dll
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\obj\Release\net8.0-windows\refint\LED bincard.dll
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\obj\Release\net8.0-windows\LED bincard.pdb
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\obj\Release\net8.0-windows\LED bincard.genruntimeconfig.cache
+C:\Users\Administrator\source\repos\LED bincard\LED bincard\obj\Release\net8.0-windows\ref\LED bincard.dll
