@@ -460,8 +460,7 @@ namespace 落Bin率计算
                     {
                         ListBoxItem item = new ListBoxItem();
                         string[] values = line.Split(',');
-
-                        if (line.StartsWith("1") && values.Length == 78)
+                        if (line.StartsWith("1") && values.Length >= 78 )
                         {
                             BinData binData = new BinData();
                             //将每个字段的值分配给相应的属性
@@ -826,7 +825,7 @@ namespace 落Bin率计算
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Multiselect = true;
             openFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
-            binDatafail.binIdx = 170;
+            binDatafail.binIdx = 17000;
             vf1fixNum = Convert.ToDouble(vf1TextBox.Text);
             lop1fixNum = Convert.ToDouble(lop1TextBox.Text);
             string outputFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OutputFolder");
