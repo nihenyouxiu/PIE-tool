@@ -27,9 +27,11 @@
 		<!-- 修正参数的文本框 -->
 		<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="0" Width="445">
 			<TextBlock Text="LOP1修正：" VerticalAlignment="Center"/>
-			<TextBox x:Name="lop1TextBox" Width="100" Margin="5" VerticalAlignment="Center" Text="1"/>
+			<TextBox x:Name="lop1TextBox" Width="50" Margin="5" VerticalAlignment="Center" Text="1"/>
 			<TextBlock Text="VF1修正：" VerticalAlignment="Center"/>
-			<TextBox x:Name="vf1TextBox" Width="100" Margin="5" VerticalAlignment="Center" Text="1"/>
+			<TextBox x:Name="vf1TextBox" Width="50" Margin="5" VerticalAlignment="Center" Text="1"/>
+			<TextBlock Text="开始行：" VerticalAlignment="Center"/>
+			<TextBox x:Name="startRowTextBox" Width="50" Margin="5" VerticalAlignment="Center" Text="15"/>
 		</StackPanel>
 
 		<!-- 按钮 -->
@@ -40,103 +42,9 @@
 		</StackPanel>
 
 		<ListBox x:Name="binDataListBox" Grid.Row="1" Margin="5,5,5,170" HorizontalContentAlignment="Stretch" Grid.ColumnSpan="2" av:ItemsSource="{av:SampleData ItemCount=5}">
-			<ListBox.ItemTemplate>
-				<DataTemplate>
-					<StackPanel Orientation="Horizontal">
-						<TextBlock Text="{Binding binIdx}" Margin="5"/>
-						<TextBlock Text="{Binding VF1Min}" Margin="5"/>
-						<TextBlock Text="{Binding VF1Max}" Margin="5"/>
-						<TextBlock Text="{Binding VF2Min}" Margin="5"/>
-						<TextBlock Text="{Binding VF2Max}" Margin="5"/>
-						<TextBlock Text="{Binding VF3Min}" Margin="5"/>
-						<TextBlock Text="{Binding VF3Max}" Margin="5"/>
-						<TextBlock Text="{Binding VF4Min}" Margin="5"/>
-						<TextBlock Text="{Binding VF4Max}" Margin="5"/>
-						<TextBlock Text="{Binding VZ1Min}" Margin="5"/>
-						<TextBlock Text="{Binding VZ1Max}" Margin="5"/>
-						<TextBlock Text="{Binding IRMin}" Margin="5"/>
-						<TextBlock Text="{Binding IRMax}" Margin="5"/>
-						<TextBlock Text="{Binding HW1Min}" Margin="5"/>
-						<TextBlock Text="{Binding HW1Max}" Margin="5"/>
-						<TextBlock Text="{Binding LOP1Min}" Margin="5"/>
-						<TextBlock Text="{Binding LOP1Max}" Margin="5"/>
-						<TextBlock Text="{Binding WLP1Min}" Margin="5"/>
-						<TextBlock Text="{Binding WLP1Max}" Margin="5"/>
-						<TextBlock Text="{Binding WLD1Min}" Margin="5"/>
-						<TextBlock Text="{Binding WLD1Max}" Margin="5"/>
-						<TextBlock Text="{Binding IR1Min}" Margin="5"/>
-						<TextBlock Text="{Binding IR1Max}" Margin="5"/>
-						<TextBlock Text="{Binding VFDMin}" Margin="5"/>
-						<TextBlock Text="{Binding VFDMax}" Margin="5"/>
-						<TextBlock Text="{Binding DVFMin}" Margin="5"/>
-						<TextBlock Text="{Binding DVFMax}" Margin="5"/>
-						<TextBlock Text="{Binding IR2Min}" Margin="5"/>
-						<TextBlock Text="{Binding IR2Max}" Margin="5"/>
-						<TextBlock Text="{Binding WLC1Min}" Margin="5"/>
-						<TextBlock Text="{Binding WLC1Max}" Margin="5"/>
-						<TextBlock Text="{Binding VF5Min}" Margin="5"/>
-						<TextBlock Text="{Binding VF5Max}" Margin="5"/>
-						<TextBlock Text="{Binding VF6Min}" Margin="5"/>
-						<TextBlock Text="{Binding VF6Max}" Margin="5"/>
-						<TextBlock Text="{Binding VF7Min}" Margin="5"/>
-						<TextBlock Text="{Binding VF7Max}" Margin="5"/>
-						<TextBlock Text="{Binding VF8Min}" Margin="5"/>
-						<TextBlock Text="{Binding VF8Max}" Margin="5"/>
-						<TextBlock Text="{Binding DVF1Min}" Margin="5"/>
-						<TextBlock Text="{Binding DVF1Max}" Margin="5"/>
-						<TextBlock Text="{Binding DVF2Min}" Margin="5"/>
-						<TextBlock Text="{Binding DVF2Max}" Margin="5"/>
-						<TextBlock Text="{Binding VZ2Min}" Margin="5"/>
-						<TextBlock Text="{Binding VZ2Max}" Margin="5"/>
-						<TextBlock Text="{Binding VZ3Min}" Margin="5"/>
-						<TextBlock Text="{Binding VZ3Max}" Margin="5"/>
-						<TextBlock Text="{Binding VZ4Min}" Margin="5"/>
-						<TextBlock Text="{Binding VZ4Max}" Margin="5"/>
-						<TextBlock Text="{Binding VZ5Min}" Margin="5"/>
-						<TextBlock Text="{Binding VZ5Max}" Margin="5"/>
-						<TextBlock Text="{Binding IR3Min}" Margin="5"/>
-						<TextBlock Text="{Binding IR3Max}" Margin="5"/>
-						<TextBlock Text="{Binding IR4Min}" Margin="5"/>
-						<TextBlock Text="{Binding IR4Max}" Margin="5"/>
-						<TextBlock Text="{Binding IR5Min}" Margin="5"/>
-						<TextBlock Text="{Binding IR5Max}" Margin="5"/>
-						<TextBlock Text="{Binding IR6Min}" Margin="5"/>
-						<TextBlock Text="{Binding IR6Max}" Margin="5"/>
-						<TextBlock Text="{Binding IFMin}" Margin="5"/>
-						<TextBlock Text="{Binding IFMax}" Margin="5"/>
-						<TextBlock Text="{Binding IF1Min}" Margin="5"/>
-						<TextBlock Text="{Binding IF1Max}" Margin="5"/>
-						<TextBlock Text="{Binding IF2Min}" Margin="5"/>
-						<TextBlock Text="{Binding IF2Max}" Margin="5"/>
-						<TextBlock Text="{Binding LOP2Min}" Margin="5"/>
-						<TextBlock Text="{Binding LOP2Max}" Margin="5"/>
-						<TextBlock Text="{Binding WLP2Min}" Margin="5"/>
-						<TextBlock Text="{Binding WLP2Max}" Margin="5"/>
-						<TextBlock Text="{Binding WLD2Min}" Margin="5"/>
-						<TextBlock Text="{Binding WLD2Max}" Margin="5"/>
-						<TextBlock Text="{Binding HW2Min}" Margin="5"/>
-						<TextBlock Text="{Binding HW2Max}" Margin="5"/>
-						<TextBlock Text="{Binding WLC2Min}" Margin="5"/>
-						<TextBlock Text="{Binding WLC2Max}" Margin="5"/>
-					</StackPanel>
-				</DataTemplate>
-			</ListBox.ItemTemplate>
 		</ListBox>
 
 		<ListBox x:Name="parameterListBox" Margin="5,170,5,5" Grid.ColumnSpan="2" Grid.Row="1" av:ItemsSource="{av:SampleData ItemCount=5}">
-			<!--<ListBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left"/>
-                </ItemsPanelTemplate>
-            </ListBox.ItemsPanel>
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal" Margin="5">
-                        <TextBlock Text="{Binding Min}" Width="100"/>
-                        <TextBlock Text="{Binding Max}" Width="100"/>
-                    </StackPanel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>-->
 		</ListBox>
 	</Grid>
 </Window>
