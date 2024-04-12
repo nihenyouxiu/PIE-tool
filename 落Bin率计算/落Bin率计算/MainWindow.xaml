@@ -15,26 +15,31 @@
 
 	<Grid>
 		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="79*"/>
-			<ColumnDefinition Width="146*"/>
+			<ColumnDefinition Width="*"/>
+			<!-- 调整按钮位置 -->
+			<ColumnDefinition Width="*"/>
 		</Grid.ColumnDefinitions>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto"/>
 			<RowDefinition Height="*"/>
 		</Grid.RowDefinitions>
 
-		<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Margin="4,0,0,0">
-			<Button Content="Bin表导入" Click="BinImport_Click" Margin="5" Width="120" Background="#007ACC" Foreground="White"/>
-			<!-- 设置按钮背景颜色和前景颜色 -->
-			<Button Content="载入文件" Click="LoadFile_Click" Margin="5" Width="120" Background="#007ACC" Foreground="White"/>
-			<Button Content="导出文件" Click="ExportToExcel_Click" Margin="5" Width="120" Background="#007ACC" Foreground="White"/>
+		<!-- 修正参数的文本框 -->
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="0" Width="445">
+			<TextBlock Text="LOP1修正：" VerticalAlignment="Center"/>
+			<TextBox x:Name="lop1TextBox" Width="100" Margin="5" VerticalAlignment="Center" Text="1"/>
+			<TextBlock Text="VF1修正：" VerticalAlignment="Center"/>
+			<TextBox x:Name="vf1TextBox" Width="100" Margin="5" VerticalAlignment="Center" Text="1"/>
 		</StackPanel>
 
-		<!--<TextBox x:Name="debugTextBox" Grid.Row="1" Margin="5" TextWrapping="Wrap" AcceptsReturn="True" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" />
-		-->
-		<!-- 用于调试的文本框 -->
+		<!-- 按钮 -->
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="1" Width="335">
+			<Button Content="Bin表导入" Click="BinImport_Click" Margin="5" Width="100" Background="#007ACC" Foreground="White"/>
+			<Button Content="载入文件" Click="LoadFile_Click" Margin="5" Width="100" Background="#007ACC" Foreground="White"/>
+			<Button Content="导出文件" Click="ExportToExcel_Click" Margin="5" Width="100" Background="#007ACC" Foreground="White"/>
+		</StackPanel>
 
-		<ListBox x:Name="binDataListBox" Grid.Row="1" Margin="5,5,5,178" HorizontalContentAlignment="Stretch" Grid.ColumnSpan="2" av:ItemsSource="{av:SampleData ItemCount=5}">
+		<ListBox x:Name="binDataListBox" Grid.Row="1" Margin="5,5,5,170" HorizontalContentAlignment="Stretch" Grid.ColumnSpan="2" av:ItemsSource="{av:SampleData ItemCount=5}">
 			<ListBox.ItemTemplate>
 				<DataTemplate>
 					<StackPanel Orientation="Horizontal">
@@ -118,20 +123,20 @@
 			</ListBox.ItemTemplate>
 		</ListBox>
 
-		<ListBox x:Name="parameterListBox" Margin="25,197,10,27" Grid.ColumnSpan="2" Grid.Row="1" av:ItemsSource="{av:SampleData ItemCount=5}">
+		<ListBox x:Name="parameterListBox" Margin="5,170,5,5" Grid.ColumnSpan="2" Grid.Row="1" av:ItemsSource="{av:SampleData ItemCount=5}">
 			<!--<ListBox.ItemsPanel>
-				<ItemsPanelTemplate>
-					<StackPanel Orientation="Vertical" HorizontalAlignment="Left"/>
-				</ItemsPanelTemplate>
-			</ListBox.ItemsPanel>
-			<ListBox.ItemTemplate>
-				<DataTemplate>
-					<StackPanel Orientation="Horizontal" Margin="5">
-						<TextBlock Text="{Binding Min}" Width="100"/>
-						<TextBlock Text="{Binding Max}" Width="100"/>
-					</StackPanel>
-				</DataTemplate>
-			</ListBox.ItemTemplate>-->
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left"/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <TextBlock Text="{Binding Min}" Width="100"/>
+                        <TextBlock Text="{Binding Max}" Width="100"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>-->
 		</ListBox>
 	</Grid>
 </Window>

@@ -4,8 +4,6 @@ using System.Globalization;
 using System.IO;
 using System.Windows;
 using Microsoft.Win32;
-using CsvHelper;
-using CsvHelper.Configuration;
 using System.Windows.Controls;
 using System.Linq;
 using System.Text;
@@ -15,6 +13,8 @@ using System.IO;
 using System.Windows;
 using System.Runtime.Intrinsics.X86;
 using System.Reflection.Metadata;
+using OfficeOpenXml.Style;
+using OfficeOpenXml.DataValidation;
 
 namespace 落Bin率计算
 {
@@ -25,8 +25,8 @@ namespace 落Bin率计算
     public class BinData
     {
         public double binIdx { get; set; }
-        public double VF1Min { get; set; }
         public double chipNum { get; set; }
+        public double VF1Min { get; set; }
         public double VF1Max { get; set; }
         public double VF2Min { get; set; }
         public double VF2Max { get; set; }
@@ -436,6 +436,7 @@ namespace 落Bin率计算
             public string Max { get; set; }
         }
 
+        string output_excel_file_name;
         private void BinImport_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -446,6 +447,8 @@ namespace 落Bin率计算
 
                 using (var reader = new StreamReader(openFileDialog.FileName, Encoding.UTF8))
                 {
+                    string output_csv_file_name = Path.GetFileNameWithoutExtension(openFileDialog.FileName); // 获取文件名，不含扩展名
+                    output_excel_file_name = $"{output_csv_file_name}.xlsx"; // 添加新的后缀名
                     // 跳过前7行
                     for (int i = 0; i < 7; i++)
                     {
@@ -611,6 +614,8 @@ namespace 落Bin率计算
 
         private void ExportToExcel_Click(object sender, RoutedEventArgs e)
         {
+            string outputFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OutputFolder");
+
             // 设置 LicenseContext 为 NonCommercial
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
@@ -620,22 +625,99 @@ namespace 落Bin率计算
             // 添加一个工作表
             ExcelWorksheet worksheet = excelPackage.Workbook.Worksheets.Add("Sheet1");
 
-            // 在工作表中写入数据
-            worksheet.Cells["A1"].Value = "Hello";
-            worksheet.Cells["B1"].Value = "World";
+            // 设置工作表的默认样式为居中对齐
+            worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
+            binDataList.Add(binDatafail);
+
+            // 写入属性名到第一行
+            worksheet.Cells[1, 1].Value = "BIN";
+            worksheet.Cells[1, 2].Value = "WLD1";
+            worksheet.Cells[1, 3].Value = "WLP1";
+            worksheet.Cells[1, 4].Value = "LOP1";
+            worksheet.Cells[1, 5].Value = "VF1";
+            worksheet.Cells[1, 6].Value = "VF2";
+            worksheet.Cells[1, 7].Value = "VF3";
+            worksheet.Cells[1, 8].Value = "ChipNum";
+            worksheet.Cells[1, 9].Value = "落bin率";
+
+            // 添加边框
+            for (int col = 1; col <= 9; col++)
+            {
+                worksheet.Cells[1, col].Style.Border.Top.Style = ExcelBorderStyle.Thin;
+                worksheet.Cells[1, col].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+                worksheet.Cells[1, col].Style.Border.Left.Style = ExcelBorderStyle.Thin;
+                worksheet.Cells[1, col].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            }
+
+            // 设置第一行的字体为微软雅黑、大小为14号
+            using (ExcelRange range = worksheet.Cells["A1:I1"])
+            {
+                range.Style.Font.Name = "微软雅黑";
+                range.Style.Font.Size = 14;
+            }
+
+            // 设置第一行的填充颜色为浅蓝色
+            using (ExcelRange range = worksheet.Cells["A1:I1"])
+            {
+                var fill = range.Style.Fill;
+                fill.PatternType = ExcelFillStyle.Solid;
+                fill.BackgroundColor.SetColor(System.Drawing.Color.LightBlue);
+            }
+
+            // 写入属性值到第二行开始
+            int row = 2;
+            foreach (var binData in binDataList)
+            {
+                worksheet.Cells[row, 1].Value = binData.binIdx;
+                worksheet.Cells[row, 2].Value = $"[{binData.WLD1Min} , {binData.WLD1Max})" ;
+                worksheet.Cells[row, 3].Value = $"[{binData.WLP1Min} , {binData.WLP1Max})";
+                worksheet.Cells[row, 4].Value = $"[{binData.LOP1Min} , {binData.LOP1Max})"; 
+                worksheet.Cells[row, 5].Value = $"[{binData.VF1Min} , {binData.VF1Max})"; 
+                worksheet.Cells[row, 6].Value = $"[{binData.VF2Min} , {binData.VF2Max})"; 
+                worksheet.Cells[row, 7].Value = $"[{binData.VF2Min} , {binData.VF2Max})"; 
+                worksheet.Cells[row, 8].Value = binData.chipNum;
+                worksheet.Cells[row, 9].Value = (double)binData.chipNum / totalChipNum;
+                // 将第九列的格式更改为数字
+                worksheet.Cells[row, 9].Style.Numberformat.Format = "0.00%";
+                row++;
+            }
+            worksheet.Cells[row, 1].Value = "total";
+            worksheet.Cells[row, 8].Value = totalChipNum - binDatafail.chipNum;
+            
+            worksheet.Cells[row, 9].Value = (totalChipNum - (double)binDatafail.chipNum) / totalChipNum;
+            worksheet.Cells[row, 9].Style.Numberformat.Format = "0.00%";
+            // 自动调整列宽以适应内容
+            worksheet.Cells.AutoFitColumns();
             // 保存 ExcelPackage 到文件
-            FileInfo excelFile = new FileInfo(@"C:\Users\Administrator\Desktop\落Bin软件\file.xlsx");
-            excelPackage.SaveAs(excelFile);
 
-            MessageBox.Show("Excel 文件已导出到 " + excelFile.FullName);
+            string output_excel_file = Path.Combine(outputFolder, output_excel_file_name);
+
+            // 确保文件名不为空
+            if (!string.IsNullOrEmpty(output_excel_file))
+            {
+                // 在此处保存 Excel 文件
+                FileInfo excelFile = new FileInfo(output_excel_file);
+                excelPackage.SaveAs(excelFile);
+                MessageBox.Show("Excel 文件已导出到 " + output_excel_file);
+            }
+            else
+            {
+                // 处理文件名为空的情况
+                MessageBox.Show("Excel 文件: " + output_excel_file + "导出出错！");
+            }
         }
 
-        private readonly object lockObject = new object();
+        BinData binDatafail = new BinData();
+        double totalChipNum = 0;
+        double vf1fixNum = 1;
+        double lop1fixNum = 1;
         private void ProcessFile(string filename, string outputCsvFile)
         {
-            // 处理单个文件的逻辑
             List<Chip> chipList = new List<Chip>();
+
+            // 处理单个文件的逻辑
             string fisrtLine = ",TEST,BINNUM,VF1,VF2,VF3,VF4,VF5,VF6,DVF,VF,VFD,VZ1,VZ2,IR,LOP1,LOP2,LOP3,WLP1,WLD1,WLC1,HW1,WLP2,WLD2,WLC2,HW2,DVF1,DVF2,VF7,VF8,IR3,IR4,IR5,IR6,VZ3,VZ4,VZ5,IF,IF1,IF2,IR1,IR2";
 
             using (StreamReader reader = new StreamReader(filename))
@@ -655,7 +737,7 @@ namespace 落Bin率计算
 
                     chipData.TEST = !string.IsNullOrEmpty(values[0]) ? Convert.ToDouble(values[0]) : -100000;
                     chipData.BIN = !string.IsNullOrEmpty(values[1]) ? 170 : -100000;
-                    chipData.VF1 = !string.IsNullOrEmpty(values[2]) ? Convert.ToDouble(values[2]) : -100000;
+                    chipData.VF1 = !string.IsNullOrEmpty(values[2]) ? Convert.ToDouble(values[2]) * vf1fixNum : -100000;
                     chipData.VF2 = !string.IsNullOrEmpty(values[3]) ? Convert.ToDouble(values[3]) : -100000;
                     chipData.VF3 = !string.IsNullOrEmpty(values[4]) ? Convert.ToDouble(values[4]) : -100000;
                     chipData.VF4 = !string.IsNullOrEmpty(values[5]) ? Convert.ToDouble(values[5]) : -100000;
@@ -664,8 +746,8 @@ namespace 落Bin率计算
                     chipData.VF = !string.IsNullOrEmpty(values[9]) ? Convert.ToDouble(values[9]) : -100000;
                     chipData.VZ1 = !string.IsNullOrEmpty(values[11]) ? Convert.ToDouble(values[11]) : -100000;
                     chipData.VZ2 = !string.IsNullOrEmpty(values[12]) ? Convert.ToDouble(values[12]) : -100000;
-                    chipData.IR = !string.IsNullOrEmpty(values[13]) ? Convert.ToDouble(values[13]) : -100000;
-                    chipData.LOP1 = !string.IsNullOrEmpty(values[14]) ? Convert.ToDouble(values[14]) * 1.01 : -100000;
+                    chipData.IR = !string.IsNullOrEmpty(values[13]) ? Convert.ToDouble(values[13]) : -100000; 
+                    chipData.LOP1 = !string.IsNullOrEmpty(values[14]) ? Convert.ToDouble(values[14]) * lop1fixNum : -100000;
                     chipData.LOP2 = !string.IsNullOrEmpty(values[15]) ? Convert.ToDouble(values[15]) : -100000;
                     chipData.LOP3 = !string.IsNullOrEmpty(values[16]) ? Convert.ToDouble(values[16]) : -100000;
                     chipData.WLP1 = !string.IsNullOrEmpty(values[17]) ? Convert.ToDouble(values[17]) : -100000;
@@ -707,6 +789,7 @@ namespace 落Bin率计算
 
             foreach (Chip chip in chipList)
             {
+                bool flag = false;
                 foreach (BinData binDataTmp in binDataList)
                 {
                     //parameterListBox.Items.Add(binDataTmp);
@@ -714,56 +797,57 @@ namespace 落Bin率计算
                     {
                         binDataTmp.chipNum++;
                         chip.BIN = binDataTmp.binIdx;
+                        flag = true;
+                        break;
                     }
                 }
+                if (!flag)
+                {
+                    binDatafail.chipNum++;
+                }
+                totalChipNum++;
                 //csvContent.AppendLine(chip.ToString());
                 totalCsvContent.AppendLine(chip.ToString());
                 //parameterListBox.Items.Add(chip);
             }
 
             // 确保对共享资源的线程安全访问
-            lock (lockObject)
-            {
                 // 使用 StreamWriter 写入 CSV 文件
                 using (StreamWriter sw = new StreamWriter(outputCsvFile,true, Encoding.UTF8))
                 {
                     sw.Write(totalCsvContent.ToString());
                 }
-            }
 
             chipList.Clear();
         }
 
-        private async void LoadFile_Click(object sender, RoutedEventArgs e)
+        private void LoadFile_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Multiselect = true;
             openFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
+            binDatafail.binIdx = 170;
+            vf1fixNum = Convert.ToDouble(vf1TextBox.Text);
+            lop1fixNum = Convert.ToDouble(lop1TextBox.Text);
+            string outputFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OutputFolder");
+            // 检查文件夹是否存在，如果存在则删除它
+            if (Directory.Exists(outputFolder))
+            {
+                Directory.Delete(outputFolder, true); // 第二个参数为 true，表示递归删除文件夹及其内容
+            }
 
-            string outputFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "输出文件夹");
             // 创建文件夹
             Directory.CreateDirectory(outputFolder);
+
             if (openFileDialog.ShowDialog() == true)
             {
-                int idx = 0;
-                List<Task> tasks = new List<Task>();
-
                 DateTime startTime = DateTime.Now; // 记录开始时间
 
                 foreach (string filename in openFileDialog.FileNames)
                 {
-                    idx++;
-                    if (idx == 20)
-                    {
-                        idx = 0;
-                    }
-
                     string output_csv_file = Path.Combine(outputFolder, Path.GetFileName(filename));
-
-                    tasks.Add(Task.Run(() => ProcessFile(filename, output_csv_file)));
+                    ProcessFile(filename, output_csv_file);
                 }
-
-                await Task.WhenAll(tasks);
 
                 DateTime endTime = DateTime.Now; // 记录结束时间
                 TimeSpan totalTime = endTime - startTime; // 计算运行时间
