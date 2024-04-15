@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>test2.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,11 +14,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="test2.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="EPPlus" Version="7.1.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="test2.png" />
+    <Resource Include="test2.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
 </Project>

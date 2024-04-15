@@ -19,6 +19,7 @@ using OfficeOpenXml.DataValidation;
 using System.Windows.Shapes;
 using System.Drawing.Drawing2D;
 using System.Text.RegularExpressions;
+using System.Threading; // 添加多线程支持
 
 namespace 落Bin率计算
 {
@@ -185,6 +186,8 @@ namespace 落Bin率计算
     public partial class MainWindow : Window
     {
         List<BinData> binDataList;
+        private readonly object binDataLock = new object(); // 添加锁对象用于保护binDataList
+        private readonly object lockObject = new object();
 
         double vf1Min = -1000000;
         double vf1Max = -1000000;
@@ -312,8 +315,8 @@ namespace 落Bin率计算
         {
             if (binDataList.Any())
             {
-                    // 获取所有属性的最小值和最大值
-                    vf1Min = binDataList.Min(data => data.VF1Min);
+                // 获取所有属性的最小值和最大值
+                vf1Min = binDataList.Min(data => data.VF1Min);
                 vf1Max = binDataList.Max(data => data.VF1Max);
 
                 vf2Min = binDataList.Min(data => data.VF2Min);
@@ -429,11 +432,7 @@ namespace 落Bin率计算
                 MessageBox.Show("输入文件有误，请重试！");
             }
         }
-        public class DataItem
-        {
-            public string Min { get; set; }
-            public string Max { get; set; }
-        }
+
         string chip_ToString(Chip chip)
         {
 
@@ -466,7 +465,7 @@ namespace 落Bin率计算
                     {
                         ListBoxItem item = new ListBoxItem();
                         string[] values = line.Split(',');
-                        if (line.StartsWith("1") && values.Length >= 78 )
+                        if (line.StartsWith("1") && values.Length >= 78)
                         {
                             BinData binData = new BinData();
                             //将每个字段的值分配给相应的属性
@@ -612,7 +611,7 @@ namespace 落Bin率计算
             {
                 MessageBox.Show("请输入文件！");
             }
-            
+
         }
 
         private void ExportToExcel_Click(object sender, RoutedEventArgs e)
@@ -672,12 +671,12 @@ namespace 落Bin率计算
             foreach (var binData in binDataList)
             {
                 worksheet.Cells[row, 1].Value = binData.binIdx;
-                worksheet.Cells[row, 2].Value = $"[{binData.WLD1Min} , {binData.WLD1Max})" ;
+                worksheet.Cells[row, 2].Value = $"[{binData.WLD1Min} , {binData.WLD1Max})";
                 worksheet.Cells[row, 3].Value = $"[{binData.WLP1Min} , {binData.WLP1Max})";
-                worksheet.Cells[row, 4].Value = $"[{binData.LOP1Min} , {binData.LOP1Max})"; 
-                worksheet.Cells[row, 5].Value = $"[{binData.VF1Min} , {binData.VF1Max})"; 
-                worksheet.Cells[row, 6].Value = $"[{binData.VF2Min} , {binData.VF2Max})"; 
-                worksheet.Cells[row, 7].Value = $"[{binData.VF2Min} , {binData.VF2Max})"; 
+                worksheet.Cells[row, 4].Value = $"[{binData.LOP1Min} , {binData.LOP1Max})";
+                worksheet.Cells[row, 5].Value = $"[{binData.VF1Min} , {binData.VF1Max})";
+                worksheet.Cells[row, 6].Value = $"[{binData.VF2Min} , {binData.VF2Max})";
+                worksheet.Cells[row, 7].Value = $"[{binData.VF2Min} , {binData.VF2Max})";
                 worksheet.Cells[row, 8].Value = binData.chipNum;
                 worksheet.Cells[row, 9].Value = (double)binData.chipNum / totalChipNum;
                 // 将第九列的格式更改为数字
@@ -686,7 +685,7 @@ namespace 落Bin率计算
             }
             worksheet.Cells[row, 1].Value = "total";
             worksheet.Cells[row, 8].Value = totalChipNum - binDatafail.chipNum;
-            
+
             worksheet.Cells[row, 9].Value = (totalChipNum - (double)binDatafail.chipNum) / totalChipNum;
             worksheet.Cells[row, 9].Style.Numberformat.Format = "0.00%";
             // 自动调整列宽以适应内容
@@ -813,28 +812,37 @@ namespace 落Bin率计算
                 foreach (Chip chip in chipList)
                 {
                     bool flag = false;
+
                     foreach (BinData binDataTmp in binDataList)
                     {
-                        //parameterListBox.Items.Add(binDataTmp);
                         if (ValidateAgainstBinData(chip, binDataTmp))
                         {
-                            binDataTmp.chipNum++;
-                            chip.BIN = binDataTmp.binIdx;
+                            lock (lockObject)
+                            {
+                                lock (binDataLock) // 锁定 binDataList 的访问
+                                {
+                                    binDataTmp.chipNum++;
+                                    chip.BIN = binDataTmp.binIdx;
+                                }
+                            }
                             flag = true;
                             break;
                         }
                     }
                     if (!flag)
                     {
-                        binDatafail.chipNum++;
+                        lock (binDataLock) // 锁定 binDataList 的访问
+                        {
+                            binDatafail.chipNum++;
+                        }
                     }
-                    totalChipNum++;
-                    //csvContent.AppendLine(chip.ToString());
-                    totalCsvContent.AppendLine(chip_ToString(chip));
-                    //parameterListBox.Items.Add(chip);
+                    lock (lockObject)
+                    {
+                        totalChipNum++;
+                        totalCsvContent.AppendLine(chip_ToString(chip));
+                    }
                 }
 
-                // 使用 StreamWriter 写入 CSV 文件
                 using (StreamWriter sw = new StreamWriter(outputCsvFile, true, Encoding.UTF8))
                 {
                     sw.Write(totalCsvContent.ToString());
@@ -844,13 +852,15 @@ namespace 落Bin率计算
             }
             else
             {
-                breakFlag = true;
-                MessageBox.Show("输入文件有误，请重新输入！");
+                lock (lockObject)
+                {
+                    breakFlag = true;
+                    MessageBox.Show("输入文件有误，请重新输入！");
+                }
             }
-
         }
 
-        private void LoadFile_Click(object sender, RoutedEventArgs e)
+        private async void LoadFile_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Multiselect = true;
@@ -873,21 +883,27 @@ namespace 落Bin率计算
             {
                 DateTime startTime = DateTime.Now; // 记录开始时间
 
+                List<Task> tasks = new List<Task>(); // 声明 tasks 列表
+
                 foreach (string filename in openFileDialog.FileNames)
                 {
                     string output_csv_file = System.IO.Path.Combine(outputFolder, System.IO.Path.GetFileName(filename));
-                    ProcessFile(filename, output_csv_file);
+                    tasks.Add(Task.Run(() => ProcessFile(filename, output_csv_file))); // 使用多线程处理文件
                     if (breakFlag)
                     {
                         break;
                     }
                 }
 
+                await Task.WhenAll(tasks); // 等待所有任务完成
+
                 if (!breakFlag)
                 {
                     DateTime endTime = DateTime.Now; // 记录结束时间
                     TimeSpan totalTime = endTime - startTime; // 计算运行时间
+
                     binDataList.Add(binDatafail);
+
                     MessageBox.Show($"文件导入成功！总共耗时：{totalTime.TotalSeconds} 秒");
                 }
             }
