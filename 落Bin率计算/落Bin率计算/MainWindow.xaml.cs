@@ -676,7 +676,7 @@ namespace 落Bin率计算
                 worksheet.Cells[row, 4].Value = $"[{binData.LOP1Min} , {binData.LOP1Max})";
                 worksheet.Cells[row, 5].Value = $"[{binData.VF1Min} , {binData.VF1Max})";
                 worksheet.Cells[row, 6].Value = $"[{binData.VF2Min} , {binData.VF2Max})";
-                worksheet.Cells[row, 7].Value = $"[{binData.VF2Min} , {binData.VF2Max})";
+                worksheet.Cells[row, 7].Value = $"[{binData.VF3Min} , {binData.VF3Max})";
                 worksheet.Cells[row, 8].Value = binData.chipNum;
                 worksheet.Cells[row, 9].Value = (double)binData.chipNum / totalChipNum;
                 // 将第九列的格式更改为数字
@@ -756,7 +756,7 @@ namespace 落Bin率计算
                         Chip chipData = new Chip();
 
                         chipData.TEST = !string.IsNullOrEmpty(values[0]) ? Convert.ToDouble(values[0]) : -100000;
-                        chipData.BIN = !string.IsNullOrEmpty(values[1]) ? 170 : -100000;
+                        chipData.BIN = !string.IsNullOrEmpty(values[1]) ? 999 : -100000;
                         chipData.VF1 = !string.IsNullOrEmpty(values[2]) ? Convert.ToDouble(values[2]) * vf1fixNum : -100000;
                         chipData.VF2 = !string.IsNullOrEmpty(values[3]) ? Convert.ToDouble(values[3]) : -100000;
                         chipData.VF3 = !string.IsNullOrEmpty(values[4]) ? Convert.ToDouble(values[4]) : -100000;
@@ -865,7 +865,7 @@ namespace 落Bin率计算
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Multiselect = true;
             openFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
-            binDatafail.binIdx = 17000;
+            binDatafail.binIdx = 999;
             startRowNum = Convert.ToDouble(startRowTextBox.Text);
             vf1fixNum = Convert.ToDouble(vf1TextBox.Text);
             lop1fixNum = Convert.ToDouble(lop1TextBox.Text);
