@@ -1,0 +1,17 @@
+﻿<Window x:Class="产出分布计算.MainWindow"
+         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		 Title="MainWindow" Height="443" Width="907">
+	<Grid>
+		<TabControl Name="MainTabControl">
+			<TabItem Header="生成Bin表">
+				<Frame Name="FramePage1" NavigationUIVisibility="Hidden" Loaded="FramePage1_Loaded" Margin="1,0,0,0"/>
+			</TabItem>
+			<TabItem Header="落bin率计算">
+				<Frame Name="FramePage2" NavigationUIVisibility="Hidden" Loaded="FramePage2_Loaded" Margin="1,0,0,0"/>
+			</TabItem>
+		</TabControl>
+	</Grid>
+</Window>
