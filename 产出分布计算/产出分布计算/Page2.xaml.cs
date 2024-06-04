@@ -1,23 +1,4 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -28,8 +9,6 @@ using System.Linq;
 using System.Text;
 using OfficeOpenXml;
 using System.Threading.Tasks;
-using System.IO;
-using System.Windows;
 using System.Diagnostics;
 using System.Runtime.Intrinsics.X86;
 using System.Reflection.Metadata;
@@ -38,8 +17,7 @@ using OfficeOpenXml.DataValidation;
 using System.Windows.Shapes;
 using System.Drawing.Drawing2D;
 using System.Text.RegularExpressions;
-using System.Threading;
-using LicenseContext = System.ComponentModel.LicenseContext; // 添加多线程支持
+using System.Threading; // 添加多线程支持
 
 namespace 产出分布计算
 {
@@ -126,9 +104,10 @@ namespace 产出分布计算
         public double WLC2Min { get; set; }
         public double WLC2Max { get; set; }
 
+        public readonly object Lock = new object();
         public override string ToString()
         {
-            return $"binIdx: {binIdx}, VF1Min: {VF1Min}, chipNum: {chipNum}, " +
+            return $"Bin: {binIdx}, VF1Min: {VF1Min}, " +
                    $"VF1Max: {VF1Max}, VF2Min: {VF2Min}, VF2Max: {VF2Max}, " +
                    $"VF3Min: {VF3Min}, VF3Max: {VF3Max}, VF4Min: {VF4Min}, " +
                    $"VF4Max: {VF4Max}, VZ1Min: {VZ1Min}, VZ1Max: {VZ1Max}, " +
@@ -206,6 +185,7 @@ namespace 产出分布计算
         List<BinData> binDataList;
         private readonly object binDataLock = new object(); // 添加锁对象用于保护binDataList
         private readonly object lockObject = new object();
+        private readonly object parameterlockObject = new object();
 
         double vf1Min = -1000000;
         double vf1Max = -1000000;
@@ -287,7 +267,6 @@ namespace 产出分布计算
         {
             InitializeComponent();
         }
-
         public bool ValidateAgainstBinData(Chip chip, BinData binData)
         {
             return
@@ -579,63 +558,13 @@ namespace 产出分布计算
                 }
                 catch (IOException)
                 {
-                    // 文件已被打开，弹出提示框显示
                     MessageBox.Show($"文件 {filename} 已被打开，请关闭后重新选择!", "文件已打开", MessageBoxButton.OK, MessageBoxImage.Exclamation);
                     return;
                 }
-                // 在循环结束后设置 ItemsSource
 
                 binDataListBox.ItemsSource = binDataList;
+                MessageBox.Show("Bin表文件导入成功，请载入片号文件！");
 
-                // 现在您可以在 binDataList 中访问导入的数据
-                if (binDataList.Any())
-                {
-                    // 将最小值和最大值显示在 TextBox 中
-                    string data = $"VF1Min: {vf1Min,-10} VF1Max: {vf1Max,-10}\n" +
-                                $"VF2Min: {vf2Min,-10} VF2Max: {vf2Max,-10}\n" +
-                                $"VF3Min: {vf3Min,-10} VF3Max: {vf3Max,-10}\n" +
-                                $"VF4Min: {vf4Min,-10} VF4Max: {vf4Max,-10}\n" +
-                                $"VZ1Min: {vz1Min,-10} VZ1Max: {vz1Max,-10}\n" +
-                                $"IRMin: {irMin,-10} IRMax: {irMax,-10}\n" +
-                                $"HW1Min: {hw1Min,-10} HW1Max: {hw1Max,-10}\n" +
-                                $"LOP1Min: {lop1Min,-10} LOP1Max: {lop1Max,-10}\n" +
-                                $"WLP1Min: {wlp1Min,-10} WLP1Max: {wlp1Max,-10}\n" +
-                                $"WLD1Min: {wld1Min,-10} WLD1Max: {wld1Max,-10}\n" +
-                                $"IR1Min: {ir1Min,-10} IR1Max: {ir1Max,-10}\n" +
-                                $"VFDMin: {vfdMin,-10} VFDMax: {vfdMax,-10}\n" +
-                                $"DVFMin: {dvfMin,-10} DVFMax: {dvfMax,-10}\n" +
-                                $"IR2Min: {ir2Min,-10} IR2Max: {ir2Max,-10}\n" +
-                                $"WLC1Min: {wlc1Min,-10} WLC1Max: {wlc1Max,-10}\n" +
-                                $"VF5Min: {vf5Min,-10} VF5Max: {vf5Max,-10}\n" +
-                                $"VF6Min: {vf6Min,-10} VF6Max: {vf6Max,-10}\n" +
-                                $"VF7Min: {vf7Min,-10} VF7Max: {vf7Max,-10}\n" +
-                                $"VF8Min: {vf8Min,-10} VF8Max: {vf8Max,-10}\n" +
-                                $"DVF1Min: {dvf1Min,-10} DVF1Max: {dvf1Max,-10}\n" +
-                                $"DVF2Min: {dvf2Min,-10} DVF2Max: {dvf2Max,-10}\n" +
-                                $"VZ2Min: {vz2Min,-10} VZ2Max: {vz2Max,-10}\n" +
-                                $"VZ3Min: {vz3Min,-10} VZ3Max: {vz3Max,-10}\n" +
-                                $"VZ4Min: {vz4Min,-10} VZ4Max: {vz4Max,-10}\n" +
-                                $"VZ5Min: {vz5Min,-10} VZ5Max: {vz5Max,-10}\n" +
-                                $"IR3Min: {ir3Min,-10} IR3Max: {ir3Max,-10}\n" +
-                                $"IR4Min: {ir4Min,-10} IR4Max: {ir4Max,-10}\n" +
-                                $"IR5Min: {ir5Min,-10} IR5Max: {ir5Max,-10}\n" +
-                                $"IR6Min: {ir6Min,-10} IR6Max: {ir6Max,-10}\n" +
-                                $"IFMin: {ifMin,-10} IFMax: {ifMax,-10}\n" +
-                                $"IF1Min: {if1Min,-10} IF1Max: {if1Max,-10}\n" +
-                                $"IF2Min: {if2Min,-10} IF2Max: {if2Max,-10}\n" +
-                                $"LOP2Min: {lop2Min,-10} LOP2Max: {lop2Max,-10}\n" +
-                                $"WLP2Min: {wlp2Min,-10} WLP2Max: {wlp2Max,-10}\n" +
-                                $"WLD2Min: {wld2Min,-10} WLD2Max: {wld2Max,-10}\n" +
-                                $"HW2Min: {hw2Min,-10} HW2Max: {hw2Max,-10}\n" +
-                                $"WLC2Min: {wlc2Min,-10} WLC2Max: {wlc2Max,-10}\n";
-
-                    string[] lines = data.Split('\n');
-                    foreach (string line in lines)
-                    {
-                        parameterListBox.Items.Add(line);
-                    }
-                    MessageBox.Show("Bin表文件导入成功，请载入片号文件！");
-                }
             }
             else
             {
@@ -652,20 +581,14 @@ namespace 产出分布计算
                 return;
             }
             string outputFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OutputFolder");
-
-            // 设置 LicenseContext 为 NonCommercial
-
-            // 创建一个新的 ExcelPackage
+            
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             ExcelPackage excelPackage = new ExcelPackage();
-
-            // 添加一个工作表
             ExcelWorksheet worksheet = excelPackage.Workbook.Worksheets.Add("Sheet1");
 
-            // 设置工作表的默认样式为居中对齐
             worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
-            // 写入属性名到第一行
             worksheet.Cells[1, 1].Value = "BIN";
             worksheet.Cells[1, 2].Value = "WLD1";
             worksheet.Cells[1, 3].Value = "WLP1";
@@ -676,7 +599,6 @@ namespace 产出分布计算
             worksheet.Cells[1, 8].Value = "ChipNum";
             worksheet.Cells[1, 9].Value = "落bin率";
 
-            // 添加边框
             for (int col = 1; col <= 9; col++)
             {
                 worksheet.Cells[1, col].Style.Border.Top.Style = ExcelBorderStyle.Thin;
@@ -779,25 +701,15 @@ namespace 产出分布计算
 
         BinData binDatafail = new BinData();
         double totalChipNum = 0;
-        double vf1fixNum = 1;
-        double lop1fixNum = 1;
-        double startRowNum = 0;
         bool breakFlag = false;
-        private void ProcessFile(string filename, string outputCsvFile)
+        private async void ProcessFile(string filename, string outputCsvFile, double vf1fixNum, double lop1fixNum)
         {
             List<Chip> chipList = new List<Chip>();
 
-            // 处理单个文件的逻辑
-            string fisrtLine = ",TEST,BIN,VF1,VF2,VF3,VF4,VF5,VF6,DVF,VF,VFD,VZ1,VZ2,IR,LOP1,LOP2,LOP3,WLP1,WLD1,WLC1,HW1,WLP2,WLD2,WLC2,HW2,DVF1,DVF2,VF7,VF8,IR3,IR4,IR5,IR6,VZ3,VZ4,VZ5,IF,IF1,IF2,IR1,IR2";
             try
             {
                 using (StreamReader reader = new StreamReader(filename))
                 {
-                    // 跳过前15行
-                    for (int i = 0; i < startRowNum; i++)
-                    {
-                        reader.ReadLine();
-                    }
 
                     while (!reader.EndOfStream)
                     {
@@ -806,9 +718,7 @@ namespace 产出分布计算
                         bool isFirstValueAllDigits = Regex.IsMatch(firstValue, @"^\d+$");
                         if (isFirstValueAllDigits && values.Length >= 56)
                         {
-                            // 创建一个新的 Chip 实例并设置属性值
                             Chip chipData = new Chip();
-
                             chipData.TEST = !string.IsNullOrEmpty(values[0]) ? Convert.ToDouble(values[0]) : -100000;
                             chipData.BIN = !string.IsNullOrEmpty(values[1]) ? 999 : -100000;
                             chipData.VF1 = !string.IsNullOrEmpty(values[2]) ? Convert.ToDouble(values[2]) * vf1fixNum : -100000;
@@ -847,28 +757,25 @@ namespace 产出分布计算
                             chipData.IR1 = !string.IsNullOrEmpty(values[50]) ? Convert.ToDouble(values[50]) : -100000;
                             chipData.IR2 = !string.IsNullOrEmpty(values[51]) ? Convert.ToDouble(values[51]) : -100000;
                             chipData.VFD = !string.IsNullOrEmpty(values[10]) ? Convert.ToDouble(values[10]) : -100000;
-                            chipData.DVF = (dvfMax == dvfMin ? -100000 : chipData.VF3 - chipData.VF2);
+                            chipData.DVF = (dvfMax == dvfMin ? -100000 : chipData.VF2 - chipData.VF3);
                             chipData.DVF1 = (dvf1Max == dvf1Min ? -100000 : chipData.VF6 - chipData.VF4);
-                            chipData.DVF2 = (dvf2Max == dvf2Min ? -100000 : chipData.VF8 - chipData.VF6);
-
-                            // 将 Chip 实例添加到列表中
+                            chipData.DVF2 = (dvf1Max == dvf1Min ? -100000 : chipData.VF8 - chipData.VF6);
                             chipList.Add(chipData);
                         }
                     }
-
                 }
             }
             catch (IOException)
             {
-                // 文件已被打开，弹出提示框显示
-                MessageBox.Show($"文件 {filename} 已被打开，请关闭后重新选择!", "文件已打开", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    MessageBox.Show($"文件 {filename} 已被打开，请关闭后重新选择!", "文件已打开", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                });
                 return;
             }
+
             BinData binDataFailTmp = binDataList.FirstOrDefault(item => item.binIdx == 999);
-            // 构建 CSV 内容
-            StringBuilder totalCsvContent = new StringBuilder();
-            totalCsvContent.AppendLine(filename);
-            totalCsvContent.AppendLine(fisrtLine);
+            int waferidchipnum = 0;
             if (chipList.Any())
             {
                 foreach (Chip chip in chipList)
@@ -879,21 +786,19 @@ namespace 产出分布计算
                     {
                         if (ValidateAgainstBinData(chip, binDataTmp))
                         {
-                            lock (lockObject)
+                            lock (binDataTmp.Lock)
                             {
-                                lock (binDataLock) // 锁定 binDataList 的访问
-                                {
-                                    binDataTmp.chipNum++;
-                                    chip.BIN = binDataTmp.binIdx;
-                                }
+                                binDataTmp.chipNum++;
+                                chip.BIN = binDataTmp.binIdx;
                             }
                             flag = true;
                             break;
                         }
                     }
+
                     if (!flag)
                     {
-                        lock (binDataLock) // 锁定 binDataList 的访问
+                        lock (binDataFailTmp?.Lock)
                         {
                             if (binDataFailTmp != null)
                             {
@@ -901,38 +806,54 @@ namespace 产出分布计算
                             }
                         }
                     }
+
                     lock (lockObject)
                     {
                         totalChipNum++;
-                        totalCsvContent.AppendLine(chip_ToString(chip));
                     }
-                }
-
-                using (StreamWriter sw = new StreamWriter(outputCsvFile, true, Encoding.UTF8))
-                {
-                    sw.Write(totalCsvContent.ToString());
+                    waferidchipnum++;
                 }
 
                 chipList.Clear();
             }
             else
             {
-                lock (lockObject)
+                await Dispatcher.InvokeAsync(() =>
                 {
                     breakFlag = true;
                     MessageBox.Show("输入文件有误，请重新输入！");
-                }
+                });
             }
+
+            await Task.Run(() =>
+            {
+                lock (lockObject)
+                {
+                    using (StreamWriter sw = new StreamWriter(outputCsvFile, true, Encoding.UTF8))
+                    {
+                        sw.WriteLineAsync(System.IO.Path.GetFileNameWithoutExtension(filename) + "," + waferidchipnum.ToString());
+                    }
+                }
+            });
+
+            await Dispatcher.InvokeAsync(() =>
+            {
+                lock (parameterlockObject)
+                {
+                    parameterListBox.Items.Add(filename + " 计算完成!");
+                    // 滚动到最新项
+                    parameterListBox.ScrollIntoView(parameterListBox.Items[parameterListBox.Items.Count - 1]);
+                }
+            });
         }
+
+
 
         void initalBinList(List<BinData> binDataList)
         {
-            if (binDataList!= null && binDataList.Any())
+            foreach (BinData binDataTmp in binDataList)
             {
-                foreach (BinData binDataTmp in binDataList)
-                {
-                    binDataTmp.chipNum = 0;
-                }
+                binDataTmp.chipNum = 0;
             }
         }
 
@@ -940,8 +861,9 @@ namespace 产出分布计算
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Multiselect = true;
+            double vf1fixNum = 1;
+            double lop1fixNum = 1;
             openFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
-            startRowNum = Convert.ToDouble(startRowTextBox.Text);
             vf1fixNum = Convert.ToDouble(vf1TextBox.Text);
             lop1fixNum = Convert.ToDouble(lop1TextBox.Text);
             string outputFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OutputFolder");
@@ -976,6 +898,11 @@ namespace 产出分布计算
 
             // 创建文件夹
             Directory.CreateDirectory(outputFolder);
+            string output_csv_file = System.IO.Path.Combine(outputFolder, "out.csv");
+            using (StreamWriter sw = new StreamWriter(output_csv_file, true, Encoding.UTF8))
+            {
+                sw.WriteLine("waferid,chipNum");
+            }
             initalBinList(binDataList);
             totalChipNum = 0;
             if (openFileDialog.ShowDialog() == true)
@@ -984,11 +911,12 @@ namespace 产出分布计算
 
                 List<Task> tasks = new List<Task>(); // 声明 tasks 列表
 
+
                 // 尝试打开文件，如果文件已经被打开会引发 IOException 异常
                 foreach (string filename in openFileDialog.FileNames)
                 {
-                    string output_csv_file = System.IO.Path.Combine(outputFolder, System.IO.Path.GetFileName(filename));
-                    tasks.Add(Task.Run(() => ProcessFile(filename, output_csv_file))); // 使用多线程处理文件
+                    //string output_csv_file = System.IO.Path.Combine(outputFolder, System.IO.Path.GetFileName(filename));
+                    tasks.Add(Task.Run(() => ProcessFile(filename, output_csv_file, vf1fixNum, lop1fixNum))); // 使用多线程处理文件
                     if (breakFlag)
                     {
                         break;

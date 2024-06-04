@@ -13,8 +13,6 @@ using System.Windows.Shapes;
 namespace 产出分布计算
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         public MainWindow()
@@ -30,6 +28,10 @@ namespace 产出分布计算
         private void FramePage2_Loaded(object sender, RoutedEventArgs e)
         {
             FramePage2.Navigate(new Page2());
+        }
+        private void FramePage3_Loaded(object sender, RoutedEventArgs e)
+        {
+            FramePage3.Navigate(new Page3());
         }
     }
 }

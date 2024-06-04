@@ -3,15 +3,23 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-		 Title="MainWindow" Height="443" Width="907">
+		Title="PIE工具软件 yao.ma@aucksun.com" Height="443" Width="907" ResizeMode="CanMinimize" Icon="/test2.ico">
 	<Grid>
-		<TabControl Name="MainTabControl">
-			<TabItem Header="生成Bin表">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="370*"/>
+			<RowDefinition Height="65*"/>
+		</Grid.RowDefinitions>
+		<TabControl Name="MainTabControl" Grid.RowSpan="5">
+			<TabItem Header="参数修改">
+				<Frame Name="FramePage3" NavigationUIVisibility="Hidden" Loaded="FramePage3_Loaded" Margin="1,0,0,0"/>
+			</TabItem>
+			<TabItem Header="产出分布">
 				<Frame Name="FramePage1" NavigationUIVisibility="Hidden" Loaded="FramePage1_Loaded" Margin="1,0,0,0"/>
 			</TabItem>
 			<TabItem Header="落bin率计算">
 				<Frame Name="FramePage2" NavigationUIVisibility="Hidden" Loaded="FramePage2_Loaded" Margin="1,0,0,0"/>
 			</TabItem>
+
 		</TabControl>
 	</Grid>
 </Window>

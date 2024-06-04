@@ -5,9 +5,106 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:产出分布计算"
       mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
+      d:DesignHeight="400" d:DesignWidth="900"
     Title="Page1">
+
 	<Grid>
-		<TextBlock Text="This is Page 1" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24"/>
+		<Grid.RowDefinitions>
+
+			<RowDefinition Height="15"/>
+			<RowDefinition Height="*"/>
+		</Grid.RowDefinitions>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="410"/>
+			<ColumnDefinition Width="490"/>
+		</Grid.ColumnDefinitions>
+
+		<StackPanel Grid.Row="2" Grid.Column="0" Orientation="Vertical" Margin="0,0,80,0" >
+			<StackPanel Orientation="Horizontal" Height="30">
+				<Label Content="BIN表命名" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Width="100" Height="30"/>
+				<TextBox x:Name="BinName" Text="BOC1C30D-EOS" Width="100" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Height="20"/>
+			</StackPanel>
+			<StackPanel Orientation="Horizontal" Height="30">
+				<Label Content="BinSetting" HorizontalContentAlignment="Center" Width="100"/>
+				<TextBox x:Name="BinSetting" Text="50" Width="100" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Height="20"/>
+			</StackPanel>
+			<StackPanel Orientation="Horizontal" Height="30">
+				<Label Content="维数" HorizontalContentAlignment="Center" Width="100"/>
+				<TextBox x:Name="dimensionTextBox" Text="2" Width="100" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Height="20"/>
+			</StackPanel>
+			<StackPanel Orientation="Horizontal" Height="30">
+			</StackPanel>
+			<StackPanel Orientation="Horizontal" Height="150" Width ="300"  Margin="0,60,0,0" >
+				<ListBox x:Name="parameterListBox" VerticalAlignment="Center" HorizontalAlignment="Left" Height="130" Width="300" />
+			</StackPanel>
+		</StackPanel>
+
+		<Grid Grid.Row="2" Grid.ColumnSpan="2" Margin="171,0,0,0" >
+			<Grid.RowDefinitions>
+				<RowDefinition Height="30"/>
+				<RowDefinition Height="30"/>
+				<RowDefinition Height="30"/>
+				<RowDefinition Height="30"/>
+				<RowDefinition Height="30"/>
+				<RowDefinition Height="30"/>
+				<RowDefinition Height="30"/>
+				<RowDefinition Height="30"/>
+				<RowDefinition Height="60"/>
+			</Grid.RowDefinitions>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="160"/>
+				<ColumnDefinition Width="110"/>
+				<ColumnDefinition Width="110"/>
+				<ColumnDefinition Width="110"/>
+				<ColumnDefinition Width="110"/>
+				<ColumnDefinition Width="*"/>
+			</Grid.ColumnDefinitions>
+
+			<TextBlock Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Right" Height="20" Width ="60" Grid.Column="0" Text="首分->"  />
+
+			<TextBlock Grid.Row="0" VerticalAlignment="Bottom"  Height="20" Width ="100" Grid.Column="1" Text="1维参数" />
+			<TextBlock Grid.Row="0" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="2" Text="1MIN" />
+			<TextBlock Grid.Row="0" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="3" Text="1DRTA" />
+			<TextBlock Grid.Row="0" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="4" Text="1NUM" />
+
+			<TextBox x:Name="para1"     VerticalAlignment="Top" Grid.Row="1" Height="20" Width ="100" Grid.Column="1" Text="WLP1" />
+			<TextBox x:Name="para1min"  VerticalAlignment="Top" Grid.Row="1" Height="20" Width ="100" Grid.Column="2" Text="436" />
+			<TextBox x:Name="para1rta"  VerticalAlignment="Top" Grid.Row="1" Height="20" Width ="100" Grid.Column="3" Text="2" />
+			<TextBox x:Name="para1num"  VerticalAlignment="Top" Grid.Row="1" Height="20" Width ="100" Grid.Column="4" Text="10" />
+
+			<TextBlock Grid.Row="2" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="1" Text="2维参数" />
+			<TextBlock Grid.Row="2" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="2" Text="2MIN" />
+			<TextBlock Grid.Row="2" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="3" Text="2DRTA" />
+			<TextBlock Grid.Row="2" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="4" Text="2NUM" />
+
+			<TextBox x:Name="para2"    VerticalAlignment="Top" Grid.Row="3" Height="20" Width ="100" Grid.Column="1" Text="vf2" />
+			<TextBox x:Name="para2min" VerticalAlignment="Top" Grid.Row="3" Height="20" Width ="100" Grid.Column="2" Text="2.833" />
+			<TextBox x:Name="para2rta" VerticalAlignment="Top" Grid.Row="3" Height="20" Width ="100" Grid.Column="3" Text="0.067" />
+			<TextBox x:Name="para2num" VerticalAlignment="Top" Grid.Row="3" Height="20" Width ="100" Grid.Column="4" Text="7" />
+
+			<TextBlock Grid.Row="4" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="1" Text="3维参数" />
+			<TextBlock Grid.Row="4" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="2" Text="3MIN" />
+			<TextBlock Grid.Row="4" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="3" Text="3DRTA" />
+			<TextBlock Grid.Row="4" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="4" Text="3NUM" />
+
+			<TextBox x:Name="para3"    VerticalAlignment="Top" Grid.Row="5" Height="20" Width ="100" Grid.Column="1" Text="VF1" />
+			<TextBox x:Name="para3min" VerticalAlignment="Top" Grid.Row="5" Height="20" Width ="100" Grid.Column="2" Text="2.3" />
+			<TextBox x:Name="para3rta" VerticalAlignment="Top" Grid.Row="5" Height="20" Width ="100" Grid.Column="3" Text="0.1" />
+			<TextBox x:Name="para3num" VerticalAlignment="Top" Grid.Row="5" Height="20" Width ="100" Grid.Column="4" Text="2" />
+			
+			<TextBlock Grid.Row="6" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="1" Text="4维参数" />
+			<TextBlock Grid.Row="6" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="2" Text="4MIN" />
+			<TextBlock Grid.Row="6" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="3" Text="4DRTA" />
+			<TextBlock Grid.Row="6" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="4" Text="4NUM" />
+
+			<TextBox x:Name="para4"    VerticalAlignment="Top" Grid.Row="7" Height="20" Width ="100" Grid.Column="1" Text="VF3" />
+			<TextBox x:Name="para4min" VerticalAlignment="Top" Grid.Row="7" Height="20" Width ="100" Grid.Column="2" Text="2.1" />
+			<TextBox x:Name="para4rta" VerticalAlignment="Top" Grid.Row="7" Height="20" Width ="100" Grid.Column="3" Text="0.1"/>
+			<TextBox x:Name="para4num" VerticalAlignment="Top" Grid.Row="7" Height="20" Width ="100" Grid.Column="4" Text="2" />
+
+			<Button Grid.Row="8" Click="clearButton_Click" Grid.Column="2" Width="100" Height="30" Content="清除" Margin="5,15,5,15" Background="#007ACC" Foreground="White"/>
+			<Button Grid.Row="8" Click="genButton_Click" Grid.Column="3" Width="100" Height="30" Content="生成" Margin="5,15,5,15" Background="#007ACC" Foreground="White"/>
+			<Button Grid.Row="8" Click="runButton_Click" Grid.Column="4" Width="100" Height="30" Content="运行" Margin="5,15,5,15" Background="#007ACC" Foreground="White"/>
+		</Grid>
 	</Grid>
 </Page>
