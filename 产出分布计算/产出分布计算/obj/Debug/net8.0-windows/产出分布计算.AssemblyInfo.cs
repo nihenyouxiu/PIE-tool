@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("产出分布计算")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5b0c4cb6354e79fbd012165517b929740af4021a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b73cb1709d0948d9255d1ee45037c87c047cba9d")]
 [assembly: System.Reflection.AssemblyProductAttribute("产出分布计算")]
 [assembly: System.Reflection.AssemblyTitleAttribute("产出分布计算")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -266,6 +266,7 @@ namespace 产出分布计算
         public Page2()
         {
             InitializeComponent();
+            this.KeepAlive = true;
         }
         public bool ValidateAgainstBinData(Chip chip, BinData binData)
         {
@@ -705,7 +706,7 @@ namespace 产出分布计算
         private async void ProcessFile(string filename, string outputCsvFile, double vf1fixNum, double lop1fixNum)
         {
             List<Chip> chipList = new List<Chip>();
-
+            int flag = 0;
             try
             {
                 using (StreamReader reader = new StreamReader(filename))
@@ -714,6 +715,12 @@ namespace 产出分布计算
                     while (!reader.EndOfStream)
                     {
                         string[] values = reader.ReadLine().Split(',');
+
+                        if (values.Length >= 56 && values[0] == "TEST")
+                        {
+                            if(values[1] == "BIN1" && values[2] == "BIN2")
+                            flag = 1;
+                        }
                         string firstValue = values[0];
                         bool isFirstValueAllDigits = Regex.IsMatch(firstValue, @"^\d+$");
                         if (isFirstValueAllDigits && values.Length >= 56)
@@ -721,42 +728,42 @@ namespace 产出分布计算
                             Chip chipData = new Chip();
                             chipData.TEST = !string.IsNullOrEmpty(values[0]) ? Convert.ToDouble(values[0]) : -100000;
                             chipData.BIN = !string.IsNullOrEmpty(values[1]) ? 999 : -100000;
-                            chipData.VF1 = !string.IsNullOrEmpty(values[2]) ? Convert.ToDouble(values[2]) * vf1fixNum : -100000;
-                            chipData.VF2 = !string.IsNullOrEmpty(values[3]) ? Convert.ToDouble(values[3]) : -100000;
-                            chipData.VF3 = !string.IsNullOrEmpty(values[4]) ? Convert.ToDouble(values[4]) : -100000;
-                            chipData.VF4 = !string.IsNullOrEmpty(values[5]) ? Convert.ToDouble(values[5]) : -100000;
-                            chipData.VF5 = !string.IsNullOrEmpty(values[6]) ? Convert.ToDouble(values[6]) : -100000;
-                            chipData.VF6 = !string.IsNullOrEmpty(values[7]) ? Convert.ToDouble(values[7]) : -100000;
-                            chipData.VF = !string.IsNullOrEmpty(values[9]) ? Convert.ToDouble(values[9]) : -100000;
-                            chipData.VZ1 = !string.IsNullOrEmpty(values[11]) ? Convert.ToDouble(values[11]) : -100000;
-                            chipData.VZ2 = !string.IsNullOrEmpty(values[12]) ? Convert.ToDouble(values[12]) : -100000;
-                            chipData.IR = !string.IsNullOrEmpty(values[13]) ? Convert.ToDouble(values[13]) : -100000;
-                            chipData.LOP1 = !string.IsNullOrEmpty(values[14]) ? Convert.ToDouble(values[14]) * lop1fixNum : -100000;
-                            chipData.LOP2 = !string.IsNullOrEmpty(values[15]) ? Convert.ToDouble(values[15]) : -100000;
-                            chipData.LOP3 = !string.IsNullOrEmpty(values[16]) ? Convert.ToDouble(values[16]) : -100000;
-                            chipData.WLP1 = !string.IsNullOrEmpty(values[17]) ? Convert.ToDouble(values[17]) : -100000;
-                            chipData.WLD1 = !string.IsNullOrEmpty(values[18]) ? Convert.ToDouble(values[18]) : -100000;
-                            chipData.WLC1 = !string.IsNullOrEmpty(values[19]) ? Convert.ToDouble(values[19]) : -100000;
-                            chipData.HW1 = !string.IsNullOrEmpty(values[20]) ? Convert.ToDouble(values[20]) : -100000;
-                            chipData.WLP2 = !string.IsNullOrEmpty(values[27]) ? Convert.ToDouble(values[27]) : -100000;
-                            chipData.WLD2 = !string.IsNullOrEmpty(values[28]) ? Convert.ToDouble(values[28]) : -100000;
-                            chipData.WLC2 = !string.IsNullOrEmpty(values[29]) ? Convert.ToDouble(values[29]) : -100000;
-                            chipData.HW2 = !string.IsNullOrEmpty(values[30]) ? Convert.ToDouble(values[30]) : -100000;
-                            chipData.VF7 = !string.IsNullOrEmpty(values[36]) ? Convert.ToDouble(values[36]) : -100000;
-                            chipData.VF8 = !string.IsNullOrEmpty(values[37]) ? Convert.ToDouble(values[37]) : -100000;
-                            chipData.IR3 = !string.IsNullOrEmpty(values[38]) ? Convert.ToDouble(values[38]) : -100000;
-                            chipData.IR4 = !string.IsNullOrEmpty(values[39]) ? Convert.ToDouble(values[39]) : -100000;
-                            chipData.IR5 = !string.IsNullOrEmpty(values[40]) ? Convert.ToDouble(values[40]) : -100000;
-                            chipData.IR6 = !string.IsNullOrEmpty(values[41]) ? Convert.ToDouble(values[41]) : -100000;
-                            chipData.VZ3 = !string.IsNullOrEmpty(values[42]) ? Convert.ToDouble(values[42]) : -100000;
-                            chipData.VZ4 = !string.IsNullOrEmpty(values[43]) ? Convert.ToDouble(values[43]) : -100000;
-                            chipData.VZ5 = !string.IsNullOrEmpty(values[44]) ? Convert.ToDouble(values[44]) : -100000;
-                            chipData.IF = !string.IsNullOrEmpty(values[45]) ? Convert.ToDouble(values[45]) : -100000;
-                            chipData.IF1 = !string.IsNullOrEmpty(values[46]) ? Convert.ToDouble(values[46]) : -100000;
-                            chipData.IF2 = !string.IsNullOrEmpty(values[47]) ? Convert.ToDouble(values[47]) : -100000;
-                            chipData.IR1 = !string.IsNullOrEmpty(values[50]) ? Convert.ToDouble(values[50]) : -100000;
-                            chipData.IR2 = !string.IsNullOrEmpty(values[51]) ? Convert.ToDouble(values[51]) : -100000;
-                            chipData.VFD = !string.IsNullOrEmpty(values[10]) ? Convert.ToDouble(values[10]) : -100000;
+                            chipData.VF1 = !string.IsNullOrEmpty(values[2 + flag]) ? Convert.ToDouble(values[2 + flag]) * vf1fixNum : -100000;
+                            chipData.VF2 = !string.IsNullOrEmpty(values[3 + flag]) ? Convert.ToDouble(values[3 + flag]) : -100000;
+                            chipData.VF3 = !string.IsNullOrEmpty(values[4 + flag]) ? Convert.ToDouble(values[4 + flag]) : -100000;
+                            chipData.VF4 = !string.IsNullOrEmpty(values[5 + flag]) ? Convert.ToDouble(values[5 + flag]) : -100000;
+                            chipData.VF5 = !string.IsNullOrEmpty(values[6 + flag]) ? Convert.ToDouble(values[6 + flag]) : -100000;
+                            chipData.VF6 = !string.IsNullOrEmpty(values[7 + flag]) ? Convert.ToDouble(values[7 + flag]) : -100000;
+                            chipData.VF = !string.IsNullOrEmpty(values[9 + flag]) ? Convert.ToDouble(values[9 + flag]) : -100000;
+                            chipData.VZ1 = !string.IsNullOrEmpty(values[11 + flag]) ? Convert.ToDouble(values[11 + flag]) : -100000;
+                            chipData.VZ2 = !string.IsNullOrEmpty(values[12 + flag]) ? Convert.ToDouble(values[12 + flag]) : -100000;
+                            chipData.IR = !string.IsNullOrEmpty(values[13 + flag]) ? Convert.ToDouble(values[13 + flag]) : -100000;
+                            chipData.LOP1 = !string.IsNullOrEmpty(values[14+flag]) ? Convert.ToDouble(values[14+flag]) * lop1fixNum : -100000;
+                            chipData.LOP2 = !string.IsNullOrEmpty(values[15+flag]) ? Convert.ToDouble(values[15+flag]) : -100000;
+                            chipData.LOP3 = !string.IsNullOrEmpty(values[16+flag]) ? Convert.ToDouble(values[16+flag]) : -100000;
+                            chipData.WLP1 = !string.IsNullOrEmpty(values[17+flag]) ? Convert.ToDouble(values[17+flag]) : -100000;
+                            chipData.WLD1 = !string.IsNullOrEmpty(values[18+flag]) ? Convert.ToDouble(values[18 + flag]) : -100000;
+                            chipData.WLC1 = !string.IsNullOrEmpty(values[19 + flag]) ? Convert.ToDouble(values[19 + flag]) : -100000;
+                            chipData.HW1 = !string.IsNullOrEmpty(values[ 20+flag]) ? Convert.ToDouble(values[20+flag]) : -100000;
+                            chipData.WLP2 = !string.IsNullOrEmpty(values[27+flag]) ? Convert.ToDouble(values[27+flag]) : -100000;
+                            chipData.WLD2 = !string.IsNullOrEmpty(values[28+flag]) ? Convert.ToDouble(values[28 + flag]) : -100000;
+                            chipData.WLC2 = !string.IsNullOrEmpty(values[29 + flag]) ? Convert.ToDouble(values[29 + flag]) : -100000;
+                            chipData.HW2 = !string.IsNullOrEmpty(values[30+flag]) ? Convert.ToDouble(values[30+flag]) : -100000;
+                            chipData.VF7 = !string.IsNullOrEmpty(values[36+flag]) ? Convert.ToDouble(values[36+flag]) : -100000;
+                            chipData.VF8 = !string.IsNullOrEmpty(values[37+flag]) ? Convert.ToDouble(values[37+flag]) : -100000;
+                            chipData.IR3 = !string.IsNullOrEmpty(values[38+flag]) ? Convert.ToDouble(values[38+flag]) : -100000;
+                            chipData.IR4 = !string.IsNullOrEmpty(values[39+flag]) ? Convert.ToDouble(values[39+flag]) : -100000;
+                            chipData.IR5 = !string.IsNullOrEmpty(values[40+flag]) ? Convert.ToDouble(values[40+flag]) : -100000;
+                            chipData.IR6 = !string.IsNullOrEmpty(values[41+flag]) ? Convert.ToDouble(values[41+flag]) : -100000;
+                            chipData.VZ3 = !string.IsNullOrEmpty(values[42+flag]) ? Convert.ToDouble(values[42+flag]) : -100000;
+                            chipData.VZ4 = !string.IsNullOrEmpty(values[43+flag]) ? Convert.ToDouble(values[43 + flag]) : -100000;
+                            chipData.VZ5 = !string.IsNullOrEmpty(values[44 + flag]) ? Convert.ToDouble(values[44 + flag]) : -100000;
+                            chipData.IF = !string.IsNullOrEmpty(values[45 + flag]) ? Convert.ToDouble(values[45 + flag]) : -100000;
+                            chipData.IF1 = !string.IsNullOrEmpty(values[46 + flag]) ? Convert.ToDouble(values[46 + flag]) : -100000;
+                            chipData.IF2 = !string.IsNullOrEmpty(values[47 + flag]) ? Convert.ToDouble(values[47 + flag]) : -100000;
+                            chipData.IR1 = !string.IsNullOrEmpty(values[50 + flag]) ? Convert.ToDouble(values[50 + flag]) : -100000;
+                            chipData.IR2 = !string.IsNullOrEmpty(values[51 + flag]) ? Convert.ToDouble(values[51 + flag]) : -100000;
+                            chipData.VFD = !string.IsNullOrEmpty(values[10 + flag]) ? Convert.ToDouble(values[10+flag]) : -100000;
                             chipData.DVF = (dvfMax == dvfMin ? -100000 : chipData.VF2 - chipData.VF3);
                             chipData.DVF1 = (dvf1Max == dvf1Min ? -100000 : chipData.VF6 - chipData.VF4);
                             chipData.DVF2 = (dvf1Max == dvf1Min ? -100000 : chipData.VF8 - chipData.VF6);
@@ -780,7 +787,7 @@ namespace 产出分布计算
             {
                 foreach (Chip chip in chipList)
                 {
-                    bool flag = false;
+                    bool flag1 = false;
 
                     foreach (BinData binDataTmp in binDataList)
                     {
@@ -791,12 +798,12 @@ namespace 产出分布计算
                                 binDataTmp.chipNum++;
                                 chip.BIN = binDataTmp.binIdx;
                             }
-                            flag = true;
+                            flag1 = true;
                             break;
                         }
                     }
 
-                    if (!flag)
+                    if (!flag1)
                     {
                         lock (binDataFailTmp?.Lock)
                         {

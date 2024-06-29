@@ -33,5 +33,10 @@ namespace 产出分布计算
         {
             FramePage3.Navigate(new Page3());
         }
+
+        private void FramePage4_Loaded(object sender, RoutedEventArgs e)
+        {
+            FramePage4.Navigate(new Page4());
+        }
     }
 }

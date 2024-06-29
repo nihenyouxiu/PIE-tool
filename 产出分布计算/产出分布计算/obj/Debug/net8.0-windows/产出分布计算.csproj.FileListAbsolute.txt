@@ -37,3 +37,5 @@ C:\Users\Administrator\source\repos\产出分布计算\产出分布计算\obj\De
 C:\Users\Administrator\source\repos\产出分布计算\产出分布计算\obj\Debug\net8.0-windows\refint\产出分布计算.dll
 C:\Users\Administrator\source\repos\产出分布计算\产出分布计算\obj\Debug\net8.0-windows\产出分布计算.genruntimeconfig.cache
 C:\Users\Administrator\source\repos\产出分布计算\产出分布计算\obj\Debug\net8.0-windows\ref\产出分布计算.dll
+C:\Users\Administrator\source\repos\产出分布计算\产出分布计算\obj\Debug\net8.0-windows\Page4.g.cs
+C:\Users\Administrator\source\repos\产出分布计算\产出分布计算\obj\Debug\net8.0-windows\Page4.baml

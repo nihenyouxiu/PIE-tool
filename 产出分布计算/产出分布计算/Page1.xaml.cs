@@ -10,10 +10,10 @@ using System;
 using Microsoft.Win32;
 using System.Text.RegularExpressions;
 using OfficeOpenXml;
+using static 产出分布计算.Page1;
 using OfficeOpenXml.ConditionalFormatting;
 using OfficeOpenXml.Style;
 using OfficeOpenXml.Style.Dxf;
-using static 产出分布计算.Page1;
 
 
 namespace 产出分布计算
@@ -56,6 +56,7 @@ namespace 产出分布计算
         public Page1()
         {
             InitializeComponent();
+            this.KeepAlive = true;
         }
 
         void WriteMatrix(List<(double, double)>[] pairs, int dim, string output_excel_file)

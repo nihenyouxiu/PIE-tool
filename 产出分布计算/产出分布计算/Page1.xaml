@@ -5,6 +5,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:产出分布计算"
       mc:Ignorable="d" 
+	  DataContext="{Binding MainViewModel, Source={x:Static Application.Current}}"
       d:DesignHeight="400" d:DesignWidth="900"
     Title="Page1">
 
