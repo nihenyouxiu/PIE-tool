@@ -22,182 +22,23 @@ using System.Threading; // 添加多线程支持
 namespace 产出分布计算
 {
     /// <summary>
-    /// Page2.xaml 的交互逻辑
+    /// Page5.xaml 的交互逻辑
     /// </summary>
-    /// 
-    public class BinData
-    {
-        public double binIdx { get; set; }
-        public double chipNum { get; set; }
-        public double VF1Min { get; set; }
-        public double VF1Max { get; set; }
-        public double VF2Min { get; set; }
-        public double VF2Max { get; set; }
-        public double VF3Min { get; set; }
-        public double VF3Max { get; set; }
-        public double VF4Min { get; set; }
-        public double VF4Max { get; set; }
-        public double VZ1Min { get; set; }
-        public double VZ1Max { get; set; }
-        public double IRMin { get; set; }
-        public double IRMax { get; set; }
-        public double HW1Min { get; set; }
-        public double HW1Max { get; set; }
-        public double LOP1Min { get; set; }
-        public double LOP1Max { get; set; }
-        public double WLP1Min { get; set; }
-        public double WLP1Max { get; set; }
-        public double WLD1Min { get; set; }
-        public double WLD1Max { get; set; }
-        public double IR1Min { get; set; }
-        public double IR1Max { get; set; }
-        public double VFDMin { get; set; }
-        public double VFDMax { get; set; }
-        public double DVFMin { get; set; }
-        public double DVFMax { get; set; }
-        public double IR2Min { get; set; }
-        public double IR2Max { get; set; }
-        public double WLC1Min { get; set; }
-        public double WLC1Max { get; set; }
-        public double VF5Min { get; set; }
-        public double VF5Max { get; set; }
-        public double VF6Min { get; set; }
-        public double VF6Max { get; set; }
-        public double VF7Min { get; set; }
-        public double VF7Max { get; set; }
-        public double VF8Min { get; set; }
-        public double VF8Max { get; set; }
-        public double DVF1Min { get; set; }
-        public double DVF1Max { get; set; }
-        public double DVF2Min { get; set; }
-        public double DVF2Max { get; set; }
-        public double VZ2Min { get; set; }
-        public double VZ2Max { get; set; }
-        public double VZ3Min { get; set; }
-        public double VZ3Max { get; set; }
-        public double VZ4Min { get; set; }
-        public double VZ4Max { get; set; }
-        public double VZ5Min { get; set; }
-        public double VZ5Max { get; set; }
-        public double IR3Min { get; set; }
-        public double IR3Max { get; set; }
-        public double IR4Min { get; set; }
-        public double IR4Max { get; set; }
-        public double IR5Min { get; set; }
-        public double IR5Max { get; set; }
-        public double IR6Min { get; set; }
-        public double IR6Max { get; set; }
-        public double IFMin { get; set; }
-        public double IFMax { get; set; }
-        public double IF1Min { get; set; }
-        public double IF1Max { get; set; }
-        public double IF2Min { get; set; }
-        public double IF2Max { get; set; }
-        public double LOP2Min { get; set; }
-        public double LOP2Max { get; set; }
-        public double WLP2Min { get; set; }
-        public double WLP2Max { get; set; }
-        public double WLD2Min { get; set; }
-        public double WLD2Max { get; set; }
-        public double HW2Min { get; set; }
-        public double HW2Max { get; set; }
-        public double WLC2Min { get; set; }
-        public double WLC2Max { get; set; }
 
-        public readonly object Lock = new object();
-        public override string ToString()
+    public partial class Page5 : Page
+    {
+        private static Dictionary<string, int> fieldOrder = new Dictionary<string, int>
         {
-            return $"Bin: {binIdx}, VF1Min: {VF1Min}, " +
-                   $"VF1Max: {VF1Max}, VF2Min: {VF2Min}, VF2Max: {VF2Max}, " +
-                   $"VF3Min: {VF3Min}, VF3Max: {VF3Max}, VF4Min: {VF4Min}, " +
-                   $"VF4Max: {VF4Max}, VZ1Min: {VZ1Min}, VZ1Max: {VZ1Max}, " +
-                   $"IRMin: {IRMin}, IRMax: {IRMax}, HW1Min: {HW1Min}, " +
-                   $"HW1Max: {HW1Max}, LOP1Min: {LOP1Min}, LOP1Max: {LOP1Max}, " +
-                   $"WLP1Min: {WLP1Min}, WLP1Max: {WLP1Max}, WLD1Min: {WLD1Min}, " +
-                   $"WLD1Max: {WLD1Max}, IR1Min: {IR1Min}, IR1Max: {IR1Max}, " +
-                   $"VFDMin: {VFDMin}, VFDMax: {VFDMax}, DVFMin: {DVFMin}, " +
-                   $"DVFMax: {DVFMax}, IR2Min: {IR2Min}, IR2Max: {IR2Max}, " +
-                   $"WLC1Min: {WLC1Min}, WLC1Max: {WLC1Max}, VF5Min: {VF5Min}, " +
-                   $"VF5Max: {VF5Max}, VF6Min: {VF6Min}, VF6Max: {VF6Max}, " +
-                   $"VF7Min: {VF7Min}, VF7Max: {VF7Max}, VF8Min: {VF8Min}, " +
-                   $"VF8Max: {VF8Max}, DVF1Min: {DVF1Min}, DVF1Max: {DVF1Max}, " +
-                   $"DVF2Min: {DVF2Min}, DVF2Max: {DVF2Max}, VZ2Min: {VZ2Min}, " +
-                   $"VZ2Max: {VZ2Max}, VZ3Min: {VZ3Min}, VZ3Max: {VZ3Max}, " +
-                   $"VZ4Min: {VZ4Min}, VZ4Max: {VZ4Max}, VZ5Min: {VZ5Min}, " +
-                   $"VZ5Max: {VZ5Max}, IR3Min: {IR3Min}, IR3Max: {IR3Max}, " +
-                   $"IR4Min: {IR4Min}, IR4Max: {IR4Max}, IR5Min: {IR5Min}, " +
-                   $"IR5Max: {IR5Max}, IR6Min: {IR6Min}, IR6Max: {IR6Max}, " +
-                   $"IFMin: {IFMin}, IFMax: {IFMax}, IF1Min: {IF1Min}, " +
-                   $"IF1Max: {IF1Max}, IF2Min: {IF2Min}, IF2Max: {IF2Max}, " +
-                   $"LOP2Min: {LOP2Min}, LOP2Max: {LOP2Max}, WLP2Min: {WLP2Min}, " +
-                   $"WLP2Max: {WLP2Max}, WLD2Min: {WLD2Min}, WLD2Max: {WLD2Max}, " +
-                   $"HW2Min: {HW2Min}, HW2Max: {HW2Max}, WLC2Min: {WLC2Min}, " +
-                   $"WLC2Max: {WLC2Max}";
-        }
-    }
-
-    public class Chip
-    {
-        public double TEST { get; set; }
-        public double BIN { get; set; }
-        public double VF1 { get; set; }
-        public double VF2 { get; set; }
-        public double VF3 { get; set; }
-        public double VF4 { get; set; }
-        public double VF5 { get; set; }
-        public double VF6 { get; set; }
-        public double DVF { get; set; }
-        public double VF { get; set; }
-        public double VFD { get; set; }
-        public double VZ1 { get; set; }
-        public double VZ2 { get; set; }
-        public double IR { get; set; }
-        public double LOP1 { get; set; }
-        public double LOP2 { get; set; }
-        public double LOP3 { get; set; }
-        public double WLP1 { get; set; }
-        public double WLD1 { get; set; }
-        public double WLC1 { get; set; }
-        public double HW1 { get; set; }
-        public double PURITY1 { get; set; }
-        public double X1 { get; set; }
-        public double Y1 { get; set; }
-        public double Z1 { get; set; }
-        public double ST1 { get; set; }
-        public double INT1 { get; set; }
-        public double WLP2 { get; set; }
-        public double WLD2 { get; set; }
-        public double WLC2 { get; set; }
-        public double HW2 { get; set; }
-        public double PURITY2 { get; set; }
-        public double DVF1 { get; set; }
-        public double DVF2 { get; set; }
-        public double INT2 { get; set; }
-        public double ST2 { get; set; }
-        public double VF7 { get; set; }
-        public double VF8 { get; set; }
-        public double IR3 { get; set; }
-        public double IR4 { get; set; }
-        public double IR5 { get; set; }
-        public double IR6 { get; set; }
-        public double VZ3 { get; set; }
-        public double VZ4 { get; set; }
-        public double VZ5 { get; set; }
-        public double IF { get; set; }
-        public double IF1 { get; set; }
-        public double IF2 { get; set; }
-        public double ESD1 { get; set; }
-        public double ESD2 { get; set; }
-        public double IR1 { get; set; }
-        public double IR2 { get; set; }
-        public double ESD1PASS { get; set; }
-        public double ESD2PASS { get; set; }
-        public int PosX { get; set; }
-        public int PosY { get; set; }
-    }
-    public partial class Page2 : Page
-    {
+            {"TEST", 0}, {"BIN", 1}, {"VF1", 2}, {"VF2", 3}, {"VF3", 4}, {"VF4", 5}, {"VF5", 6}, {"VF6", 7}, {"DVF", 8},
+            {"VF", 9}, {"VFD", 10}, {"VZ1", 11}, {"VZ2", 12}, {"IR", 13}, {"LOP1", 14}, {"LOP2", 15}, {"LOP3", 16},
+            {"WLP1", 17}, {"WLD1", 18}, {"WLC1", 19}, {"HW1", 20}, {"PURITY1", 21}, {"X1", 22}, {"Y1", 23}, {"Z1", 24},
+            {"ST1", 25}, {"INT1", 26}, {"WLP2", 27}, {"WLD2", 28}, {"WLC2", 29}, {"HW2", 30}, {"PURITY2", 31}, {"DVF1", 32},
+            {"DVF2", 33}, {"INT2", 34}, {"ST2", 35}, {"VF7", 36}, {"VF8", 37}, {"IR3", 38}, {"IR4", 39}, {"IR5", 40}, {"IR6", 41},
+            {"VZ3", 42}, {"VZ4", 43}, {"VZ5", 44}, {"IF", 45}, {"IF1", 46}, {"IF2", 47}, {"ESD1", 48}, {"ESD2", 49}, {"IR1", 50},
+            {"IR2", 51}, {"ESD1PASS", 52}, {"ESD2PASS", 53}, {"PosX", 54}, {"PosY", 55}
+        };
         List<BinData> binDataList;
+        
         private readonly object binDataLock = new object(); // 添加锁对象用于保护binDataList
         private readonly object lockObject = new object();
         private readonly object parameterlockObject = new object();
@@ -278,10 +119,12 @@ namespace 产出分布计算
         double wlc2Max = -1000000;
         string postfix;
 
-        public Page2()
+        public Page5()
         {
             InitializeComponent();
+            this.KeepAlive = true;
         }
+
         public bool ValidateAgainstBinData(Chip chip, BinData binData)
         {
             return
@@ -596,7 +439,7 @@ namespace 产出分布计算
                 return;
             }
             string outputFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OutputFolder");
-            
+
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             ExcelPackage excelPackage = new ExcelPackage();
             ExcelWorksheet worksheet = excelPackage.Workbook.Worksheets.Add("Sheet1");
@@ -714,12 +557,20 @@ namespace 产出分布计算
             }
         }
 
+
         BinData binDatafail = new BinData();
         double totalChipNum = 0;
         bool breakFlag = false;
+        
         private async void ProcessFile(string filename, string outputCsvFile, double vf1fixNum, double lop1fixNum)
         {
             List<Chip> chipList = new List<Chip>();
+            int minX = int.MaxValue;
+            int maxX = int.MinValue;
+            int minY = int.MaxValue;
+            int maxY = int.MinValue;
+            string lines = "";
+            Dictionary<(int X, int Y), Chip> chipDictionary = new Dictionary<(int X, int Y), Chip>();
             int flag = 0;
             try
             {
@@ -728,60 +579,90 @@ namespace 产出分布计算
 
                     while (!reader.EndOfStream)
                     {
-                        string[] values = reader.ReadLine().Split(',');
+                        string line = reader.ReadLine();
+                        string[] values = line.Split(',');
+
 
                         if (values.Length >= 56 && values[0] == "TEST")
                         {
-                            if(values[1] == "BIN1" && values[2] == "BIN2")
-                            flag = 1;
+                            if (values[1] == "BIN1" && values[2] == "BIN2")
+                                flag = 1;
                         }
                         string firstValue = values[0];
                         bool isFirstValueAllDigits = Regex.IsMatch(firstValue, @"^\d+$");
+                        if (!isFirstValueAllDigits)
+                        {
+                            lines += line + "\r\n";
+                        }
                         if (isFirstValueAllDigits && values.Length >= 56)
                         {
-                            Chip chipData = new Chip();
-                            chipData.TEST = !string.IsNullOrEmpty(values[0]) ? Convert.ToDouble(values[0]) : -100000;
-                            chipData.BIN = !string.IsNullOrEmpty(values[1]) ? 999 : -100000;
-                            chipData.VF1 = !string.IsNullOrEmpty(values[2 + flag]) ? Convert.ToDouble(values[2 + flag]) * vf1fixNum : -100000;
-                            chipData.VF2 = !string.IsNullOrEmpty(values[3 + flag]) ? Convert.ToDouble(values[3 + flag]) : -100000;
-                            chipData.VF3 = !string.IsNullOrEmpty(values[4 + flag]) ? Convert.ToDouble(values[4 + flag]) : -100000;
-                            chipData.VF4 = !string.IsNullOrEmpty(values[5 + flag]) ? Convert.ToDouble(values[5 + flag]) : -100000;
-                            chipData.VF5 = !string.IsNullOrEmpty(values[6 + flag]) ? Convert.ToDouble(values[6 + flag]) : -100000;
-                            chipData.VF6 = !string.IsNullOrEmpty(values[7 + flag]) ? Convert.ToDouble(values[7 + flag]) : -100000;
-                            chipData.VF = !string.IsNullOrEmpty(values[9 + flag]) ? Convert.ToDouble(values[9 + flag]) : -100000;
-                            chipData.VZ1 = !string.IsNullOrEmpty(values[11 + flag]) ? Convert.ToDouble(values[11 + flag]) : -100000;
-                            chipData.VZ2 = !string.IsNullOrEmpty(values[12 + flag]) ? Convert.ToDouble(values[12 + flag]) : -100000;
-                            chipData.IR = !string.IsNullOrEmpty(values[13 + flag]) ? Convert.ToDouble(values[13 + flag]) : -100000;
-                            chipData.LOP1 = !string.IsNullOrEmpty(values[14+flag]) ? Convert.ToDouble(values[14+flag]) * lop1fixNum : -100000;
-                            chipData.LOP2 = !string.IsNullOrEmpty(values[15+flag]) ? Convert.ToDouble(values[15+flag]) : -100000;
-                            chipData.LOP3 = !string.IsNullOrEmpty(values[16+flag]) ? Convert.ToDouble(values[16+flag]) : -100000;
-                            chipData.WLP1 = !string.IsNullOrEmpty(values[17+flag]) ? Convert.ToDouble(values[17+flag]) : -100000;
-                            chipData.WLD1 = !string.IsNullOrEmpty(values[18+flag]) ? Convert.ToDouble(values[18 + flag]) : -100000;
-                            chipData.WLC1 = !string.IsNullOrEmpty(values[19 + flag]) ? Convert.ToDouble(values[19 + flag]) : -100000;
-                            chipData.HW1 = !string.IsNullOrEmpty(values[ 20+flag]) ? Convert.ToDouble(values[20+flag]) : -100000;
-                            chipData.WLP2 = !string.IsNullOrEmpty(values[27+flag]) ? Convert.ToDouble(values[27+flag]) : -100000;
-                            chipData.WLD2 = !string.IsNullOrEmpty(values[28+flag]) ? Convert.ToDouble(values[28 + flag]) : -100000;
-                            chipData.WLC2 = !string.IsNullOrEmpty(values[29 + flag]) ? Convert.ToDouble(values[29 + flag]) : -100000;
-                            chipData.HW2 = !string.IsNullOrEmpty(values[30+flag]) ? Convert.ToDouble(values[30+flag]) : -100000;
-                            chipData.VF7 = !string.IsNullOrEmpty(values[36+flag]) ? Convert.ToDouble(values[36+flag]) : -100000;
-                            chipData.VF8 = !string.IsNullOrEmpty(values[37+flag]) ? Convert.ToDouble(values[37+flag]) : -100000;
-                            chipData.IR3 = !string.IsNullOrEmpty(values[38+flag]) ? Convert.ToDouble(values[38+flag]) : -100000;
-                            chipData.IR4 = !string.IsNullOrEmpty(values[39+flag]) ? Convert.ToDouble(values[39+flag]) : -100000;
-                            chipData.IR5 = !string.IsNullOrEmpty(values[40+flag]) ? Convert.ToDouble(values[40+flag]) : -100000;
-                            chipData.IR6 = !string.IsNullOrEmpty(values[41+flag]) ? Convert.ToDouble(values[41+flag]) : -100000;
-                            chipData.VZ3 = !string.IsNullOrEmpty(values[42+flag]) ? Convert.ToDouble(values[42+flag]) : -100000;
-                            chipData.VZ4 = !string.IsNullOrEmpty(values[43+flag]) ? Convert.ToDouble(values[43 + flag]) : -100000;
-                            chipData.VZ5 = !string.IsNullOrEmpty(values[44 + flag]) ? Convert.ToDouble(values[44 + flag]) : -100000;
-                            chipData.IF = !string.IsNullOrEmpty(values[45 + flag]) ? Convert.ToDouble(values[45 + flag]) : -100000;
-                            chipData.IF1 = !string.IsNullOrEmpty(values[46 + flag]) ? Convert.ToDouble(values[46 + flag]) : -100000;
-                            chipData.IF2 = !string.IsNullOrEmpty(values[47 + flag]) ? Convert.ToDouble(values[47 + flag]) : -100000;
-                            chipData.IR1 = !string.IsNullOrEmpty(values[50 + flag]) ? Convert.ToDouble(values[50 + flag]) : -100000;
-                            chipData.IR2 = !string.IsNullOrEmpty(values[51 + flag]) ? Convert.ToDouble(values[51 + flag]) : -100000;
-                            chipData.VFD = !string.IsNullOrEmpty(values[10 + flag]) ? Convert.ToDouble(values[10+flag]) : -100000;
-                            chipData.DVF = (dvfMax == dvfMin ? -100000 : chipData.VF2 - chipData.VF3);
-                            chipData.DVF1 = (dvf1Max == dvf1Min ? -100000 : chipData.VF6 - chipData.VF4);
-                            chipData.DVF2 = (dvf1Max == dvf1Min ? -100000 : chipData.VF8 - chipData.VF6);
+                            Chip chipData = new Chip
+                            {
+                                TEST = !string.IsNullOrEmpty(values[0]) ? Convert.ToDouble(values[0]) : -100000,
+                                BIN = !string.IsNullOrEmpty(values[1]) ? 999 : -100000,
+                                VF1 = !string.IsNullOrEmpty(values[2 + flag]) ? Convert.ToDouble(values[2 + flag]) : -100000,
+                                VF2 = !string.IsNullOrEmpty(values[3 + flag]) ? Convert.ToDouble(values[3 + flag]) : -100000,
+                                VF3 = !string.IsNullOrEmpty(values[4 + flag]) ? Convert.ToDouble(values[4 + flag]) : -100000,
+                                VF4 = !string.IsNullOrEmpty(values[5 + flag]) ? Convert.ToDouble(values[5 + flag]) : -100000,
+                                VF5 = !string.IsNullOrEmpty(values[6 + flag]) ? Convert.ToDouble(values[6 + flag]) : -100000,
+                                VF6 = !string.IsNullOrEmpty(values[7 + flag]) ? Convert.ToDouble(values[7 + flag]) : -100000,
+                                DVF = !string.IsNullOrEmpty(values[8 + flag]) ? Convert.ToDouble(values[8 + flag]) : -100000,
+                                VF = !string.IsNullOrEmpty(values[9 + flag]) ? Convert.ToDouble(values[9 + flag]) : -100000,
+                                VFD = !string.IsNullOrEmpty(values[10 + flag]) ? Convert.ToDouble(values[10 + flag]) : -100000,
+                                VZ1 = !string.IsNullOrEmpty(values[11 + flag]) ? Convert.ToDouble(values[11 + flag]) : -100000,
+                                VZ2 = !string.IsNullOrEmpty(values[12 + flag]) ? Convert.ToDouble(values[12 + flag]) : -100000,
+                                IR = !string.IsNullOrEmpty(values[13 + flag]) ? Convert.ToDouble(values[13 + flag]) : -100000,
+                                LOP1 = !string.IsNullOrEmpty(values[14 + flag]) ? Convert.ToDouble(values[14 + flag]) : -100000,
+                                LOP2 = !string.IsNullOrEmpty(values[15 + flag]) ? Convert.ToDouble(values[15 + flag]) : -100000,
+                                LOP3 = !string.IsNullOrEmpty(values[16 + flag]) ? Convert.ToDouble(values[16 + flag]) : -100000,
+                                WLP1 = !string.IsNullOrEmpty(values[17 + flag]) ? Convert.ToDouble(values[17 + flag]) : -100000,
+                                WLD1 = !string.IsNullOrEmpty(values[18 + flag]) ? Convert.ToDouble(values[18 + flag]) : -100000,
+                                WLC1 = !string.IsNullOrEmpty(values[19 + flag]) ? Convert.ToDouble(values[19 + flag]) : -100000,
+                                HW1 = !string.IsNullOrEmpty(values[20 + flag]) ? Convert.ToDouble(values[20 + flag]) : -100000,
+                                PURITY1 = !string.IsNullOrEmpty(values[21 + flag]) ? Convert.ToDouble(values[21 + flag]) : -100000,
+                                X1 = !string.IsNullOrEmpty(values[22 + flag]) ? Convert.ToDouble(values[22 + flag]) : -100000,
+                                Y1 = !string.IsNullOrEmpty(values[23 + flag]) ? Convert.ToDouble(values[23 + flag]) : -100000,
+                                Z1 = !string.IsNullOrEmpty(values[24 + flag]) ? Convert.ToDouble(values[24 + flag]) : -100000,
+                                ST1 = !string.IsNullOrEmpty(values[25 + flag]) ? Convert.ToDouble(values[25 + flag]) : -100000,
+                                INT1 = !string.IsNullOrEmpty(values[26 + flag]) ? Convert.ToDouble(values[26 + flag]) : -100000,
+                                WLP2 = !string.IsNullOrEmpty(values[27 + flag]) ? Convert.ToDouble(values[27 + flag]) : -100000,
+                                WLD2 = !string.IsNullOrEmpty(values[28 + flag]) ? Convert.ToDouble(values[28 + flag]) : -100000,
+                                WLC2 = !string.IsNullOrEmpty(values[29 + flag]) ? Convert.ToDouble(values[29 + flag]) : -100000,
+                                HW2 = !string.IsNullOrEmpty(values[30 + flag]) ? Convert.ToDouble(values[30 + flag]) : -100000,
+                                PURITY2 = !string.IsNullOrEmpty(values[31 + flag]) ? Convert.ToDouble(values[31 + flag]) : -100000,
+                                DVF1 = !string.IsNullOrEmpty(values[32 + flag]) ? Convert.ToDouble(values[32 + flag]) : -100000,
+                                DVF2 = !string.IsNullOrEmpty(values[33 + flag]) ? Convert.ToDouble(values[33 + flag]) : -100000,
+                                INT2 = !string.IsNullOrEmpty(values[34 + flag]) ? Convert.ToDouble(values[34 + flag]) : -100000,
+                                ST2 = !string.IsNullOrEmpty(values[35 + flag]) ? Convert.ToDouble(values[35 + flag]) : -100000,
+                                VF7 = !string.IsNullOrEmpty(values[36 + flag]) ? Convert.ToDouble(values[36 + flag]) : -100000,
+                                VF8 = !string.IsNullOrEmpty(values[37 + flag]) ? Convert.ToDouble(values[37 + flag]) : -100000,
+                                IR3 = !string.IsNullOrEmpty(values[38 + flag]) ? Convert.ToDouble(values[38 + flag]) : -100000,
+                                IR4 = !string.IsNullOrEmpty(values[39 + flag]) ? Convert.ToDouble(values[39 + flag]) : -100000,
+                                IR5 = !string.IsNullOrEmpty(values[40 + flag]) ? Convert.ToDouble(values[40 + flag]) : -100000,
+                                IR6 = !string.IsNullOrEmpty(values[41 + flag]) ? Convert.ToDouble(values[41 + flag]) : -100000,
+                                VZ3 = !string.IsNullOrEmpty(values[42 + flag]) ? Convert.ToDouble(values[42 + flag]) : -100000,
+                                VZ4 = !string.IsNullOrEmpty(values[43 + flag]) ? Convert.ToDouble(values[43 + flag]) : -100000,
+                                VZ5 = !string.IsNullOrEmpty(values[44 + flag]) ? Convert.ToDouble(values[44 + flag]) : -100000,
+                                IF = !string.IsNullOrEmpty(values[45 + flag]) ? Convert.ToDouble(values[45 + flag]) : -100000,
+                                IF1 = !string.IsNullOrEmpty(values[46 + flag]) ? Convert.ToDouble(values[46 + flag]) : -100000,
+                                IF2 = !string.IsNullOrEmpty(values[47 + flag]) ? Convert.ToDouble(values[47 + flag]) : -100000,
+                                ESD1 = !string.IsNullOrEmpty(values[48 + flag]) ? Convert.ToDouble(values[48 + flag]) : -100000,
+                                ESD2 = !string.IsNullOrEmpty(values[49 + flag]) ? Convert.ToDouble(values[49 + flag]) : -100000,
+                                IR1 = !string.IsNullOrEmpty(values[50 + flag]) ? Convert.ToDouble(values[50 + flag]) : -100000,
+                                IR2 = !string.IsNullOrEmpty(values[51 + flag]) ? Convert.ToDouble(values[51 + flag]) : -100000,
+                                ESD1PASS = !string.IsNullOrEmpty(values[52 + flag]) ? Convert.ToDouble(values[52 + flag]) : -100000,
+                                ESD2PASS = !string.IsNullOrEmpty(values[53 + flag]) ? Convert.ToDouble(values[53 + flag]) : -100000,
+                                PosX = !string.IsNullOrEmpty(values[54 + flag]) ? Convert.ToInt32(values[54 + flag]) : -100000,
+                                PosY = !string.IsNullOrEmpty(values[55 + flag]) ? Convert.ToInt32(values[55 + flag]) : -100000,
+                            };
                             chipList.Add(chipData);
+
+                            chipDictionary[(chipData.PosX, chipData.PosY)] = chipData;
+                            
+                            if (chipData.PosX < minX) minX = chipData.PosX; // Track min and max values of PosX and PosY
+                            if (chipData.PosX > maxX) maxX = chipData.PosX;
+                            if (chipData.PosY < minY) minY = chipData.PosY;
+                            if (chipData.PosY > maxY) maxY = chipData.PosY;
                         }
                     }
                 }
@@ -794,6 +675,14 @@ namespace 产出分布计算
                 });
                 return;
             }
+
+            // Ensure minX and minY are even
+            minX = minX % 2 == 0 ? minX : minX - 1;
+            minY = minY % 2 == 0 ? minY : minY - 1;
+
+            // Ensure maxX and maxY are even
+            maxX = maxX % 2 == 0 ? maxX : maxX + 1;
+            maxY = maxY % 2 == 0 ? maxY : maxY + 1;
 
             BinData binDataFailTmp = binDataList.FirstOrDefault(item => item.binIdx == 999);
             int waferidchipnum = 0;
@@ -823,6 +712,7 @@ namespace 产出分布计算
                         {
                             if (binDataFailTmp != null)
                             {
+                                chip.BIN = 999;
                                 binDataFailTmp.chipNum++;
                             }
                         }
@@ -834,7 +724,6 @@ namespace 产出分布计算
                     }
                     waferidchipnum++;
                 }
-
                 chipList.Clear();
             }
             else
@@ -845,17 +734,121 @@ namespace 产出分布计算
                     MessageBox.Show("输入文件有误，请重新输入！");
                 });
             }
-
+            lines = lines.TrimEnd('\r', '\n');
             await Task.Run(() =>
             {
                 lock (lockObject)
                 {
                     using (StreamWriter sw = new StreamWriter(outputCsvFile, true, Encoding.UTF8))
                     {
-                        sw.WriteLineAsync(System.IO.Path.GetFileNameWithoutExtension(filename) + "," + waferidchipnum.ToString());
+                        sw.WriteLineAsync(lines);
                     }
                 }
             });
+
+            int index = 0;
+            for (int x = minX; x <= maxX; x += 2)
+            {
+                for (int y = minY; y <= maxY; y += 2)
+                {
+                    if (chipDictionary.ContainsKey((x, y)) && chipDictionary.ContainsKey((x, y + 1)) &&
+                        chipDictionary.ContainsKey((x + 1, y)) && chipDictionary.ContainsKey((x + 1, y + 1)))
+                    {
+                        if(chipDictionary[(x,y)].BIN != 999 && chipDictionary[(x+1, y)].BIN != 999 && chipDictionary[(x, y+1)].BIN != 999&& chipDictionary[(x+1, y+1)].BIN != 999)
+                        {
+
+                            index++;
+                            var chips = new List<Chip>
+                            {
+                                chipDictionary[(x, y)],
+                                chipDictionary[(x, y + 1)],
+                                chipDictionary[(x + 1, y)],
+                                chipDictionary[(x + 1, y + 1)]
+                            };
+
+
+                            var averagedChip = new Chip
+                            {
+                                TEST = index,
+                                BIN = -100000,
+                                VF1 = chips.Average(c => c.VF1),
+                                VF2 = chips.Average(c => c.VF2),
+                                VF3 = chips.Average(c => c.VF3),
+                                VF4 = chips.Average(c => c.VF4),
+                                VF5 = chips.Average(c => c.VF5),
+                                VF6 = chips.Average(c => c.VF6),
+                                DVF = chips.Average(c => c.DVF),
+                                VF = chips.Average(c => c.VF),
+                                VFD = chips.Average(c => c.VFD),
+                                VZ1 = chips.Average(c => c.VZ1),
+                                VZ2 = chips.Average(c => c.VZ2),
+                                IR = chips.Average(c => c.IR),
+                                LOP1 = chips.Average(c => c.LOP1),
+                                LOP2 = chips.Average(c => c.LOP2),
+                                LOP3 = chips.Average(c => c.LOP3),
+                                WLP1 = chips.Average(c => c.WLP1),
+                                WLD1 = chips.Average(c => c.WLD1),
+                                WLC1 = chips.Average(c => c.WLC1),
+                                HW1 = chips.Average(c => c.HW1),
+                                PURITY1 = chips.Average(c => c.PURITY1),
+                                X1 = chips.Average(c => c.X1),
+                                Y1 = chips.Average(c => c.Y1),
+                                Z1 = chips.Average(c => c.Z1),
+                                ST1 = chips.Average(c => c.ST1),
+                                INT1 = chips.Average(c => c.INT1),
+                                WLP2 = chips.Average(c => c.WLP2),
+                                WLD2 = chips.Average(c => c.WLD2),
+                                WLC2 = chips.Average(c => c.WLC2),
+                                HW2 = chips.Average(c => c.HW2),
+                                PURITY2 = chips.Average(c => c.PURITY2),
+                                DVF1 = chips.Average(c => c.DVF1),
+                                DVF2 = chips.Average(c => c.DVF2),
+                                INT2 = chips.Average(c => c.INT2),
+                                ST2 = chips.Average(c => c.ST2),
+                                VF7 = chips.Average(c => c.VF7),
+                                VF8 = chips.Average(c => c.VF8),
+                                IR3 = chips.Average(c => c.IR3),
+                                IR4 = chips.Average(c => c.IR4),
+                                IR5 = chips.Average(c => c.IR5),
+                                IR6 = chips.Average(c => c.IR6),
+                                VZ3 = chips.Average(c => c.VZ3),
+                                VZ4 = chips.Average(c => c.VZ4),
+                                VZ5 = chips.Average(c => c.VZ5),
+                                IF = chips.Average(c => c.IF),
+                                IF1 = chips.Average(c => c.IF1),
+                                IF2 = chips.Average(c => c.IF2),
+                                ESD1 = chips.Average(c => c.ESD1),
+                                ESD2 = chips.Average(c => c.ESD2),
+                                IR1 = chips.Average(c => c.IR1),
+                                IR2 = chips.Average(c => c.IR2),
+                                ESD1PASS = chips.Average(c => c.ESD1PASS),
+                                ESD2PASS = chips.Average(c => c.ESD2PASS),
+                                PosX = x,
+                                PosY = y
+                            };
+
+                            await Task.Run(() =>
+                            {
+                                lock (lockObject)
+                                {
+                                    using (StreamWriter sw = new StreamWriter(outputCsvFile, true, Encoding.UTF8))
+                                    {
+
+                                        sw.WriteLineAsync(string.Join(",", fieldOrder.Keys
+                                            .Select(key =>
+                                            {
+                                                var value = typeof(Chip).GetProperty(key).GetValue(averagedChip);
+                                                return Convert.ToDouble(value) != -100000 ? value.ToString() : "";
+                                            })));
+                                    }
+                                }
+                            });
+                        }
+
+                    }
+                }
+            }
+
 
             await Dispatcher.InvokeAsync(() =>
             {
@@ -919,11 +912,6 @@ namespace 产出分布计算
 
             // 创建文件夹
             Directory.CreateDirectory(outputFolder);
-            string output_csv_file = System.IO.Path.Combine(outputFolder, "out.csv");
-            using (StreamWriter sw = new StreamWriter(output_csv_file, true, Encoding.UTF8))
-            {
-                sw.WriteLine("waferid,chipNum");
-            }
             initalBinList(binDataList);
             totalChipNum = 0;
             if (openFileDialog.ShowDialog() == true)
@@ -936,7 +924,9 @@ namespace 产出分布计算
                 // 尝试打开文件，如果文件已经被打开会引发 IOException 异常
                 foreach (string filename in openFileDialog.FileNames)
                 {
-                    //string output_csv_file = System.IO.Path.Combine(outputFolder, System.IO.Path.GetFileName(filename));
+                    //string output_csv_file = System.IO.Path.Combine(outputFolder, filename);
+
+                    string output_csv_file = System.IO.Path.Combine(outputFolder, System.IO.Path.GetFileNameWithoutExtension(filename) + "-matrix.csv");
                     tasks.Add(Task.Run(() => ProcessFile(filename, output_csv_file, vf1fixNum, lop1fixNum))); // 使用多线程处理文件
                     if (breakFlag)
                     {

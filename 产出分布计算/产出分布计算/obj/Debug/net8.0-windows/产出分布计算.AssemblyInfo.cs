@@ -11,12 +11,12 @@
 using System;
 using System.Reflection;
 
-[assembly: System.Reflection.AssemblyCompanyAttribute("产出分布计算")]
+[assembly: System.Reflection.AssemblyCompanyAttribute("PIE工具软件")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b73cb1709d0948d9255d1ee45037c87c047cba9d")]
-[assembly: System.Reflection.AssemblyProductAttribute("产出分布计算")]
-[assembly: System.Reflection.AssemblyTitleAttribute("产出分布计算")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cbb5f6c50a7a60a81a397734f1d8b1ff0aead853")]
+[assembly: System.Reflection.AssemblyProductAttribute("PIE工具软件")]
+[assembly: System.Reflection.AssemblyTitleAttribute("PIE工具软件")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
 [assembly: System.Runtime.Versioning.TargetPlatformAttribute("Windows7.0")]
 [assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("Windows7.0")]

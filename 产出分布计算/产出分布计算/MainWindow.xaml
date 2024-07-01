@@ -12,17 +12,20 @@
 		</Grid.RowDefinitions>
 		
 		<TabControl Name="MainTabControl" Grid.RowSpan="5">
-			<TabItem Header="参数修改">
-				<Frame Name="FramePage3" NavigationUIVisibility="Hidden" Loaded="FramePage3_Loaded" Margin="1,0,0,0"/>
+			<TabItem Header="参数修改" Width="100" Height="20" >
+				<Frame Name="FramePage3"  NavigationUIVisibility="Hidden" Loaded="FramePage3_Loaded" Margin="1,0,0,0"/>
 			</TabItem>
-			<TabItem Header="产出分布">
+			<TabItem Header="产出分布" Width="100" Height="20" >
 				<Frame Name="FramePage1" NavigationUIVisibility="Hidden" Loaded="FramePage1_Loaded" Margin="1,0,0,0"/>
 			</TabItem>
-			<TabItem Header="落bin率计算">
+			<TabItem Header="落bin率计算" Width="100" Height="20" >
 				<Frame Name="FramePage2" NavigationUIVisibility="Hidden" Loaded="FramePage2_Loaded" Margin="1,0,0,0"/>
 			</TabItem>
-			<TabItem Header="DVF计算">
+			<TabItem Header="DVF计算" Width="100" Height="20" >
 				<Frame Name="FramePage4" NavigationUIVisibility="Hidden" Loaded="FramePage4_Loaded" Margin="1,0,0,0"/>
+			</TabItem>
+			<TabItem Header="矩阵芯粒计算" Width="100" Height="20" >
+				<Frame Name="FramePage5" NavigationUIVisibility="Hidden" Loaded="FramePage5_Loaded" Margin="1,0,0,0"/>
 			</TabItem>
 		</TabControl>
 	</Grid>

@@ -16,11 +16,12 @@
 			<RowDefinition Height="*"/>
 		</Grid.RowDefinitions>
 		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="410"/>
+			<ColumnDefinition Width="319"/>
+			<ColumnDefinition Width="91"/>
 			<ColumnDefinition Width="490"/>
 		</Grid.ColumnDefinitions>
 
-		<StackPanel Grid.Row="2" Grid.Column="0" Orientation="Vertical" Margin="0,0,80,0" >
+		<StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" Margin="0,0,80,0" Grid.ColumnSpan="2" >
 			<StackPanel Orientation="Horizontal" Height="30">
 				<Label Content="BIN表命名" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Width="100" Height="30"/>
 				<TextBox x:Name="BinName" Text="BOC1C30D-EOS" Width="100" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Height="20"/>
@@ -40,7 +41,7 @@
 			</StackPanel>
 		</StackPanel>
 
-		<Grid Grid.Row="2" Grid.ColumnSpan="2" Margin="171,0,0,0" >
+		<Grid Grid.Row="1" Grid.ColumnSpan="3" Margin="171,0,0,0" >
 			<Grid.RowDefinitions>
 				<RowDefinition Height="30"/>
 				<RowDefinition Height="30"/>
@@ -92,7 +93,7 @@
 			<TextBox x:Name="para3min" VerticalAlignment="Top" Grid.Row="5" Height="20" Width ="100" Grid.Column="2" Text="2.3" />
 			<TextBox x:Name="para3rta" VerticalAlignment="Top" Grid.Row="5" Height="20" Width ="100" Grid.Column="3" Text="0.1" />
 			<TextBox x:Name="para3num" VerticalAlignment="Top" Grid.Row="5" Height="20" Width ="100" Grid.Column="4" Text="2" />
-			
+
 			<TextBlock Grid.Row="6" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="1" Text="4维参数" />
 			<TextBlock Grid.Row="6" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="2" Text="4MIN" />
 			<TextBlock Grid.Row="6" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="3" Text="4DRTA" />
