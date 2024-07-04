@@ -754,11 +754,8 @@ namespace 产出分布计算
                     if (chipDictionary.ContainsKey((x, y)) && chipDictionary.ContainsKey((x, y + 1)) &&
                         chipDictionary.ContainsKey((x + 1, y)) && chipDictionary.ContainsKey((x + 1, y + 1)))
                     {
-                        if(chipDictionary[(x,y)].BIN != 999 && chipDictionary[(x+1, y)].BIN != 999 && chipDictionary[(x, y+1)].BIN != 999&& chipDictionary[(x+1, y+1)].BIN != 999)
-                        {
-
-                            index++;
-                            var chips = new List<Chip>
+                        index++;
+                        var chips = new List<Chip>
                             {
                                 chipDictionary[(x, y)],
                                 chipDictionary[(x, y + 1)],
@@ -766,89 +763,117 @@ namespace 产出分布计算
                                 chipDictionary[(x + 1, y + 1)]
                             };
 
+                        var averagedChip = new Chip
+                        {
+                            TEST = index,
+                            BIN = -100000,
+                            VF1 = 0.0f,
+                            VF2 = chips.Average(c => c.VF2),
+                            VF3 = chips.Average(c => c.VF3),
+                            VF4 = chips.Average(c => c.VF4),
+                            VF5 = chips.Average(c => c.VF5),
+                            VF6 = chips.Average(c => c.VF6),
+                            DVF = chips.Average(c => c.DVF),
+                            VF = chips.Average(c => c.VF),
+                            VFD = chips.Average(c => c.VFD),
+                            VZ1 = chips.Average(c => c.VZ1),
+                            VZ2 = chips.Average(c => c.VZ2),
+                            IR = chips.Average(c => c.IR),
+                            LOP1 = chips.Average(c => c.LOP1),
+                            LOP2 = chips.Average(c => c.LOP2),
+                            LOP3 = chips.Average(c => c.LOP3),
+                            WLP1 = chips.Average(c => c.WLP1),
+                            WLD1 = chips.Average(c => c.WLD1),
+                            WLC1 = chips.Average(c => c.WLC1),
+                            HW1 = chips.Average(c => c.HW1),
+                            PURITY1 = chips.Average(c => c.PURITY1),
+                            X1 = chips.Average(c => c.X1),
+                            Y1 = chips.Average(c => c.Y1),
+                            Z1 = chips.Average(c => c.Z1),
+                            ST1 = chips.Average(c => c.ST1),
+                            INT1 = chips.Average(c => c.INT1),
+                            WLP2 = chips.Average(c => c.WLP2),
+                            WLD2 = chips.Average(c => c.WLD2),
+                            WLC2 = chips.Average(c => c.WLC2),
+                            HW2 = chips.Average(c => c.HW2),
+                            PURITY2 = chips.Average(c => c.PURITY2),
+                            DVF1 = chips.Average(c => c.DVF1),
+                            DVF2 = chips.Average(c => c.DVF2),
+                            INT2 = chips.Average(c => c.INT2),
+                            ST2 = chips.Average(c => c.ST2),
+                            VF7 = chips.Average(c => c.VF7),
+                            VF8 = chips.Average(c => c.VF8),
+                            IR3 = chips.Average(c => c.IR3),
+                            IR4 = chips.Average(c => c.IR4),
+                            IR5 = chips.Average(c => c.IR5),
+                            IR6 = chips.Average(c => c.IR6),
+                            VZ3 = chips.Average(c => c.VZ3),
+                            VZ4 = chips.Average(c => c.VZ4),
+                            VZ5 = chips.Average(c => c.VZ5),
+                            IF = chips.Average(c => c.IF),
+                            IF1 = chips.Average(c => c.IF1),
+                            IF2 = chips.Average(c => c.IF2),
+                            ESD1 = chips.Average(c => c.ESD1),
+                            ESD2 = chips.Average(c => c.ESD2),
+                            IR1 = chips.Average(c => c.IR1),
+                            IR2 = chips.Average(c => c.IR2),
+                            ESD1PASS = chips.Average(c => c.ESD1PASS),
+                            ESD2PASS = chips.Average(c => c.ESD2PASS),
+                            PosX = x,
+                            PosY = y
+                        };
 
-                            var averagedChip = new Chip
-                            {
-                                TEST = index,
-                                BIN = -100000,
-                                VF1 = chips.Average(c => c.VF1),
-                                VF2 = chips.Average(c => c.VF2),
-                                VF3 = chips.Average(c => c.VF3),
-                                VF4 = chips.Average(c => c.VF4),
-                                VF5 = chips.Average(c => c.VF5),
-                                VF6 = chips.Average(c => c.VF6),
-                                DVF = chips.Average(c => c.DVF),
-                                VF = chips.Average(c => c.VF),
-                                VFD = chips.Average(c => c.VFD),
-                                VZ1 = chips.Average(c => c.VZ1),
-                                VZ2 = chips.Average(c => c.VZ2),
-                                IR = chips.Average(c => c.IR),
-                                LOP1 = chips.Average(c => c.LOP1),
-                                LOP2 = chips.Average(c => c.LOP2),
-                                LOP3 = chips.Average(c => c.LOP3),
-                                WLP1 = chips.Average(c => c.WLP1),
-                                WLD1 = chips.Average(c => c.WLD1),
-                                WLC1 = chips.Average(c => c.WLC1),
-                                HW1 = chips.Average(c => c.HW1),
-                                PURITY1 = chips.Average(c => c.PURITY1),
-                                X1 = chips.Average(c => c.X1),
-                                Y1 = chips.Average(c => c.Y1),
-                                Z1 = chips.Average(c => c.Z1),
-                                ST1 = chips.Average(c => c.ST1),
-                                INT1 = chips.Average(c => c.INT1),
-                                WLP2 = chips.Average(c => c.WLP2),
-                                WLD2 = chips.Average(c => c.WLD2),
-                                WLC2 = chips.Average(c => c.WLC2),
-                                HW2 = chips.Average(c => c.HW2),
-                                PURITY2 = chips.Average(c => c.PURITY2),
-                                DVF1 = chips.Average(c => c.DVF1),
-                                DVF2 = chips.Average(c => c.DVF2),
-                                INT2 = chips.Average(c => c.INT2),
-                                ST2 = chips.Average(c => c.ST2),
-                                VF7 = chips.Average(c => c.VF7),
-                                VF8 = chips.Average(c => c.VF8),
-                                IR3 = chips.Average(c => c.IR3),
-                                IR4 = chips.Average(c => c.IR4),
-                                IR5 = chips.Average(c => c.IR5),
-                                IR6 = chips.Average(c => c.IR6),
-                                VZ3 = chips.Average(c => c.VZ3),
-                                VZ4 = chips.Average(c => c.VZ4),
-                                VZ5 = chips.Average(c => c.VZ5),
-                                IF = chips.Average(c => c.IF),
-                                IF1 = chips.Average(c => c.IF1),
-                                IF2 = chips.Average(c => c.IF2),
-                                ESD1 = chips.Average(c => c.ESD1),
-                                ESD2 = chips.Average(c => c.ESD2),
-                                IR1 = chips.Average(c => c.IR1),
-                                IR2 = chips.Average(c => c.IR2),
-                                ESD1PASS = chips.Average(c => c.ESD1PASS),
-                                ESD2PASS = chips.Average(c => c.ESD2PASS),
-                                PosX = x,
-                                PosY = y
-                            };
-
-                            await Task.Run(() =>
-                            {
-                                lock (lockObject)
-                                {
-                                    using (StreamWriter sw = new StreamWriter(outputCsvFile, true, Encoding.UTF8))
-                                    {
-
-                                        sw.WriteLineAsync(string.Join(",", fieldOrder.Keys
-                                            .Select(key =>
-                                            {
-                                                var value = typeof(Chip).GetProperty(key).GetValue(averagedChip);
-                                                return Convert.ToDouble(value) != -100000 ? value.ToString() : "";
-                                            })));
-                                    }
-                                }
-                            });
+                        if (chipDictionary[(x,y)].BIN != 999 && chipDictionary[(x+1, y)].BIN != 999 && chipDictionary[(x, y+1)].BIN != 999&& chipDictionary[(x+1, y+1)].BIN != 999)
+                        {
+                            averagedChip.VF1 = chips.Average(c => c.VF1);
                         }
+
+                        await Task.Run(() =>
+                        {
+                            lock (lockObject)
+                            {
+                                using (StreamWriter sw = new StreamWriter(outputCsvFile, true, Encoding.UTF8))
+                                {
+
+                                    sw.WriteLineAsync(string.Join(",", fieldOrder.Keys
+                                        .Select(key =>
+                                        {
+                                            var value = typeof(Chip).GetProperty(key).GetValue(averagedChip);
+                                            return Convert.ToDouble(value) != -100000 ? value.ToString() : "";
+                                        })));
+                                }
+                            }
+                        });
 
                     }
                 }
             }
 
+            try
+            {
+                // 读取CSV文件内容
+                string[] liness = File.ReadAllLines(outputCsvFile);
+
+                // 修改TotalTested列的数据
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    string[] columns = liness[i].Split(',');
+                    if (columns.Length > 0 && columns[0] == "TotalTested")
+                    {
+                        // 假设TotalTested列是第二列（索引为1），修改为newValue
+                        columns[2] = index.ToString();
+                        liness[i] = string.Join(",", columns);
+                        break; // 找到并修改第一次出现的TotalTested后退出循环
+                    }
+                }
+
+                // 将修改后的内容写回CSV文件
+                File.WriteAllLinesAsync(outputCsvFile, liness, Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("错误：" + ex.Message);
+            }
 
             await Dispatcher.InvokeAsync(() =>
             {
@@ -926,7 +951,7 @@ namespace 产出分布计算
                 {
                     //string output_csv_file = System.IO.Path.Combine(outputFolder, filename);
 
-                    string output_csv_file = System.IO.Path.Combine(outputFolder, System.IO.Path.GetFileNameWithoutExtension(filename) + "-matrix.csv");
+                    string output_csv_file = System.IO.Path.Combine(outputFolder, System.IO.Path.GetFileNameWithoutExtension(filename) + ".csv");
                     tasks.Add(Task.Run(() => ProcessFile(filename, output_csv_file, vf1fixNum, lop1fixNum))); // 使用多线程处理文件
                     if (breakFlag)
                     {

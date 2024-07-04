@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PIE工具软件")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cbb5f6c50a7a60a81a397734f1d8b1ff0aead853")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+11e85984bf8b2bd3e3c810edeb23a4f522c0e3c0")]
 [assembly: System.Reflection.AssemblyProductAttribute("PIE工具软件")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PIE工具软件")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
