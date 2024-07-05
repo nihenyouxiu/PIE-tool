@@ -777,10 +777,10 @@ namespace 产出分布计算
                             chipData.IF2 = !string.IsNullOrEmpty(values[47 + flag]) ? Convert.ToDouble(values[47 + flag]) : -100000;
                             chipData.IR1 = !string.IsNullOrEmpty(values[50 + flag]) ? Convert.ToDouble(values[50 + flag]) : -100000;
                             chipData.IR2 = !string.IsNullOrEmpty(values[51 + flag]) ? Convert.ToDouble(values[51 + flag]) : -100000;
-                            chipData.VFD = !string.IsNullOrEmpty(values[10 + flag]) ? Convert.ToDouble(values[10+flag]) : -100000;
-                            chipData.DVF = (dvfMax == dvfMin ? -100000 : chipData.VF2 - chipData.VF3);
-                            chipData.DVF1 = (dvf1Max == dvf1Min ? -100000 : chipData.VF6 - chipData.VF4);
-                            chipData.DVF2 = (dvf1Max == dvf1Min ? -100000 : chipData.VF8 - chipData.VF6);
+                            chipData.VFD = !string.IsNullOrEmpty(values[10 + flag]) ? Convert.ToDouble(values[10 + flag]) : -100000;
+                            chipData.DVF = !string.IsNullOrEmpty(values[8 + flag]) ? Convert.ToDouble(values[8 + flag]) : -100000;
+                            chipData.DVF1 = !string.IsNullOrEmpty(values[32 + flag]) ? Convert.ToDouble(values[32 + flag]) : -100000;
+                            chipData.DVF2 = !string.IsNullOrEmpty(values[33 + flag]) ? Convert.ToDouble(values[33 + flag]) : -100000;
                             chipList.Add(chipData);
                         }
                     }
