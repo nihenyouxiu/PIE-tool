@@ -141,7 +141,7 @@ namespace 产出分布计算
         private async void importWaferFiles(string filename, int dim, int[] col2, string outputCsvFile)
         {
             int flag = 0;
-
+            string outputPath = System.IO.Path.GetDirectoryName(outputCsvFile);
             Wafer waferData = new Wafer(System.IO.Path.GetFileNameWithoutExtension(filename));
             try
             {
@@ -188,14 +188,6 @@ namespace 产出分布计算
                         }
                     }
                 }
-                
-                await Task.Run(() =>
-                {
-                    lock (lockObject)
-                    {
-                        wafers.Add(filename); // 将每一行添加到ListBox
-                    }
-                });
 
                 await Task.Run(() =>
                 {
@@ -217,12 +209,11 @@ namespace 产出分布计算
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"读取文件时出错: {ex.Message}\n{ex.StackTrace}");
+                //MessageBox.Show($"读取文件时出错: {ex.Message}\n{ex.StackTrace}");
                 await Task.Run(() =>
                 {
                     lock (lockObject)
                     {
-                        string outputPath = System.IO.Path.GetDirectoryName(outputCsvFile);
                         using (StreamWriter sw = new StreamWriter(System.IO.Path.Combine(outputPath, "NotFindFile.csv"), true, Encoding.UTF8))
                         {
                             sw.WriteLineAsync(filename);
@@ -277,7 +268,6 @@ namespace 产出分布计算
         int[,] matrix2D;
         int[,,] matrix3D;
         int[,,,] matrix4D;
-        List<string> wafers = new List<string>();
         public Wafer GetWaferById(string waferId)
         {
             lock (dictLock)
@@ -337,7 +327,6 @@ namespace 产出分布计算
             {
                 File.Delete(output_csv_file);
             }
-
 
             if (File.Exists(not_find_csv_file))
             {
@@ -771,7 +760,7 @@ namespace 产出分布计算
 
             worksheet.Cells[1, 1].Value = BinName.Text;
             worksheet.Cells[1, 2].Value = "total";
-            worksheet.Cells[1, 3].Value = wafers.Count;
+            worksheet.Cells[1, 3].Value = waferList.Count;
 
             int row1 = 1;
             double rowstotal = 0;
@@ -837,7 +826,7 @@ namespace 产出分布计算
                 }
             }
         }
-
+        
         public void CreateExcelWithColorScale(ExcelWorksheet worksheet, int row1, int col1,int row2,int col2)
         {
 
@@ -886,7 +875,7 @@ namespace 产出分布计算
 
             worksheet.Cells[1, 1].Value = BinName.Text;
             worksheet.Cells[1, 2].Value = "total";
-            worksheet.Cells[1, 3].Value = wafers.Count;
+            worksheet.Cells[1, 3].Value = waferList.Count;
 
             int row1 = 1;
             worksheet.Cells[1+ row1, 1].Value = ($"{p1}/{p2}");
@@ -1079,7 +1068,7 @@ namespace 产出分布计算
 
             worksheet.Cells[1, 1].Value = BinName.Text;
             worksheet.Cells[1, 2].Value = "total";
-            worksheet.Cells[1, 3].Value = wafers.Count;
+            worksheet.Cells[1, 3].Value = waferList.Count;
 
             int row11 = 1;
 
@@ -1296,7 +1285,7 @@ namespace 产出分布计算
             //worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             //worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
-            //worksheet.Cells[1, 3].Value = ($"{wafers.Count}");
+            //worksheet.Cells[1, 3].Value = ($"{waferList.Count}");
 
             //for (int t = 0; t < time; t++)
             //{

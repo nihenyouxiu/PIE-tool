@@ -819,8 +819,8 @@ namespace 产出分布计算
                             IR2 = chips.Average(c => c.IR2),
                             ESD1PASS = chips.Average(c => c.ESD1PASS),
                             ESD2PASS = chips.Average(c => c.ESD2PASS),
-                            PosX = x,
-                            PosY = y
+                            PosX = x / 2 ,
+                            PosY = y / 2
                         };
 
                         if (chipDictionary[(x,y)].BIN != 999 && chipDictionary[(x+1, y)].BIN != 999 && chipDictionary[(x, y+1)].BIN != 999&& chipDictionary[(x+1, y+1)].BIN != 999)
