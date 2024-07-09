@@ -14,7 +14,11 @@ using static 产出分布计算.Page1;
 using OfficeOpenXml.ConditionalFormatting;
 using OfficeOpenXml.Style;
 using OfficeOpenXml.Style.Dxf;
-
+using System.Collections.Concurrent;
+using System.IO.MemoryMappedFiles;
+using System.ComponentModel;
+using System.Windows.Shapes;
+using System.Data;
 
 namespace 产出分布计算
 {
@@ -23,9 +27,21 @@ namespace 产出分布计算
     /// </summary>
     public partial class Page1 : Page
     {
+        private int _progress;
+        public int Progress
+        {
+            get { return _progress; }
+            set
+            {
+                _progress = value;
+                OnPropertyChanged("Progress");
+            }
+        }
+        private readonly object fileWriteLock = new object(); // 用于保护文件写入操作的锁对象
         private readonly object parameterlockObject = new object();
         readonly object lockObject = new object();
-        class Chip
+        private object dictLock = new object(); // 定义字典的锁对象
+        public class Chip
         {
             public double Dimension1 { get; }
             public double Dimension2 { get; }
@@ -53,10 +69,33 @@ namespace 产出分布计算
             }
         }
 
+        public class Wafer
+        {
+            public string WaferId { get; set; }
+            public List<Chip> Chips { get; set; }
+
+            public Wafer(string waferId)
+            {
+                WaferId = waferId;
+                Chips = new List<Chip>();
+            }
+
+            public void AddChip(Chip chip)
+            {
+                Chips.Add(chip);
+            }
+
+            public int GetChipCount()
+            {
+                return Chips.Count;
+            }
+        }
+
         public Page1()
         {
             InitializeComponent();
             this.KeepAlive = true;
+            DataContext = this;
         }
 
         void WriteMatrix(List<(double, double)>[] pairs, int dim, string output_excel_file)
@@ -97,11 +136,13 @@ namespace 产出分布计算
                     {"IR2", 51}, {"ESD1PASS", 52}, {"ESD2PASS", 53}, {"PosX", 54}, {"PosY", 55}
                 };
 
-        private async void ProcessFile(string filename, int dim, List<(double, double)>[] pairs, int[] col2)
+        private Dictionary<string,Wafer> waferList = new Dictionary<string, Wafer>();
+
+        private async void importWaferFiles(string filename, int dim, int[] col2, string outputCsvFile)
         {
-            List<Chip> chipList = new List<Chip>();
-            int waferidchipnum = 0;
             int flag = 0;
+
+            Wafer waferData = new Wafer(System.IO.Path.GetFileNameWithoutExtension(filename));
             try
             {
                 using (StreamReader reader = new StreamReader(filename))
@@ -123,10 +164,9 @@ namespace 产出分布计算
                             double Dimension2 = 0;
                             double Dimension3 = 0;
                             double Dimension4 = 0;
-                            waferidchipnum++;
                             if (dim >= 1)
                             {
-                                Dimension1 = !string.IsNullOrEmpty(values[col2[0]+ flag]) ? Convert.ToDouble(values[col2[0] + flag]) : -100000;
+                                Dimension1 = !string.IsNullOrEmpty(values[col2[0] + flag]) ? Convert.ToDouble(values[col2[0] + flag]) : -100000;
                             }
                             if (dim >= 2)
                             {
@@ -141,21 +181,61 @@ namespace 产出分布计算
                                 Dimension4 = !string.IsNullOrEmpty(values[col2[3] + flag]) ? Convert.ToDouble(values[col2[3] + flag]) : -100000;
                             }
                             Chip chipData = new Chip(Dimension1, Dimension2, Dimension3, Dimension4);
-                            chipList.Add(chipData);
+                            lock (lockObject)
+                            {
+                                waferData.Chips.Add(chipData);
+                            }
                         }
                     }
                 }
+                
+                await Task.Run(() =>
+                {
+                    lock (lockObject)
+                    {
+                        wafers.Add(filename); // 将每一行添加到ListBox
+                    }
+                });
+
+                await Task.Run(() =>
+                {
+                    lock (dictLock)
+                    {
+                        waferList.Add(waferData.WaferId, waferData);
+                    }
+                });
+
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    lock (parameterlockObject)
+                    {
+                        parameterListBox.Items.Add(System.IO.Path.GetFileName(filename) + " 导入完成!");
+                        // 滚动到最新项
+                        parameterListBox.ScrollIntoView(parameterListBox.Items[parameterListBox.Items.Count - 1]);
+                    }
+                });
             }
-            catch (IOException)
+            catch (Exception ex)
             {
-                //await Dispatcher.InvokeAsync(() =>
-                //{
-                    MessageBox.Show($"文件 {filename} 已被打开，请关闭后重新选择!", "文件已打开", MessageBoxButton.OK, MessageBoxImage.Exclamation);
-                //});
+                MessageBox.Show($"读取文件时出错: {ex.Message}\n{ex.StackTrace}");
+                await Task.Run(() =>
+                {
+                    lock (lockObject)
+                    {
+                        string outputPath = System.IO.Path.GetDirectoryName(outputCsvFile);
+                        using (StreamWriter sw = new StreamWriter(System.IO.Path.Combine(outputPath, "NotFindFile.csv"), true, Encoding.UTF8))
+                        {
+                            sw.WriteLineAsync(filename);
+                        }
+                    }
+                });
                 return;
             }
+        }
 
-            if (chipList.Any())
+        private async void ProcessFile(Wafer wafer, int dim, List<(double, double)>[] pairs, double[] fixNums, string[] ops)
+        {
+            if (waferList.Any())
             {
 
                 if (dim == 1)
@@ -163,7 +243,7 @@ namespace 产出分布计算
                     // 处理一维数据
                     lock (lockObject)
                     {
-                        Generate1DMatrix(chipList, pairs);
+                        Generate1DMatrix(wafer.Chips, pairs, fixNums, ops);
                     }
                 }
                 else if (dim == 2)
@@ -171,7 +251,7 @@ namespace 产出分布计算
                     lock (lockObject) 
                     { 
                         // 处理二维数据
-                        Generate2DMatrix(chipList, pairs);
+                        Generate2DMatrix(wafer.Chips, pairs, fixNums, ops);
                     }
                 }
                 else if (dim == 3)
@@ -179,7 +259,7 @@ namespace 产出分布计算
                     lock (lockObject)
                     { 
                         // 处理三维数据
-                        Generate3DMatrix(chipList, pairs);
+                        Generate3DMatrix(wafer.Chips, pairs, fixNums, ops);
                     }
                 }
                 else if (dim == 4)
@@ -187,37 +267,212 @@ namespace 产出分布计算
                     lock (lockObject)
                     {
                         // 处理四维数据
-                        Generate4DMatrix(chipList, pairs);
+                        Generate4DMatrix(wafer.Chips, pairs, fixNums, ops);
                     }
                 }
-                chipList.Clear();
-                await Dispatcher.InvokeAsync(() =>
-                {
-                    lock (parameterlockObject)
-                    {
-                        parameterListBox.Items.Add(Path.GetFileName(filename) + " 计算完成!");
-                        // 滚动到最新项
-                        parameterListBox.ScrollIntoView(parameterListBox.Items[parameterListBox.Items.Count - 1]);
-                    }
-                });
             }
-            else
-            {
-                breakFlag = true;
-                MessageBox.Show("输入文件有误，请重新输入！");
-            }
-
         }
 
         int[] matrix1D;
         int[,] matrix2D;
         int[,,] matrix3D;
         int[,,,] matrix4D;
-        async void runButton_Click(object sender, RoutedEventArgs e)
+        List<string> wafers = new List<string>();
+        public Wafer GetWaferById(string waferId)
         {
-            int dim = 0;
+            lock (dictLock)
+            {
+                if (waferList.TryGetValue(waferId, out Wafer wafer))
+                {
+                    return wafer;
+                }
+                return null;
+            }
+        }
+        private async void importButton_Click(object sender, RoutedEventArgs e)
+        {
+            DisableAllButtons();
+
+            if (!int.TryParse(dimensionTextBox.Text, out int dim))
+            {
+                System.Windows.MessageBox.Show("Invalid dimension value. Please enter a valid integer.");
+                return;
+            }
+
+            col2 = new int[dim];
+
+            if (dim >= 1)
+            {
+                if (dict2.ContainsKey(this.para1.Text.ToUpper())) col2[0] = dict2[this.para1.Text.ToUpper()];
+            }
+            if (dim >= 2)
+            {
+                if (dict2.ContainsKey(this.para2.Text.ToUpper())) col2[1] = dict2[this.para2.Text.ToUpper()];
+            }
+            if (dim >= 3)
+            {
+                if (dict2.ContainsKey(this.para3.Text.ToUpper())) col2[2] = dict2[this.para3.Text.ToUpper()];
+            }
+            if (dim >= 4)
+            {
+                MessageBox.Show("4维数据产出分布未开发！");
+                return;
+                if (dict2.ContainsKey(this.para4.Text.ToUpper())) col2[3] = dict2[this.para4.Text.ToUpper()];
+            }
+
+            string outputFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OutputFolder");
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Multiselect = false;
+            openFileDialog.Filter = "TXT files (*.txt)|*.txt|All files (*.*)|*.*";
+            string output_excel_file = System.IO.Path.Combine(outputFolder, $"{BinName.Text}.xlsx");
+            // 检查文件夹是否存在
+            if (!Directory.Exists(outputFolder))
+            {
+                Directory.CreateDirectory(outputFolder);
+            }
+
+            string output_csv_file = System.IO.Path.Combine(outputFolder, "output.csv");
+            string not_find_csv_file = System.IO.Path.Combine(outputFolder, "NotFindFile.csv");
+            if (File.Exists(output_csv_file))
+            {
+                File.Delete(output_csv_file);
+            }
+
+
+            if (File.Exists(not_find_csv_file))
+            {
+                File.Delete(not_find_csv_file);
+            }
+
+            string filePathText = filePath.Text;
+            if (openFileDialog.ShowDialog() == true)
+            {
+                DateTime startTime = DateTime.Now; // 记录开始时间
+
+                List<Task> tasks = new List<Task>(); // 声明 tasks 列表
+
+                int totalLines = 0;
+
+                // 计算总行数
+                foreach (string filename in openFileDialog.FileNames)
+                {
+                    totalLines += File.ReadAllLines(filename).Length;
+                }
+
+                Progress = 0;
+                progressBar.Value = 0;
+                int processedLines = 0;
+
+                // 尝试打开文件，如果文件已经被打开会引发 IOException 异常
+                using (StreamReader sr = new StreamReader(openFileDialog.FileName))
+                {
+                    string line;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        string filePathTemp = System.IO.Path.Combine(filePathText, line + ".csv");
+                        tasks.Add(Task.Run(() =>
+                        {
+                            importWaferFiles(filePathTemp, dim, col2, output_csv_file);
+                            processedLines++;
+                            Progress = (int)Math.Ceiling(processedLines * 100.0 / totalLines);
+                            Dispatcher.Invoke(() =>
+                            {
+                                progressBar.Value = Progress;
+                                progressText.Text = $"{Progress}%";
+                            });
+                        }));
+                    }
+                }
+
+                await Task.WhenAll(tasks); // 等待所有任务完成
+
+                foreach (var temp in waferList)
+                {
+                    tasks.Add(Task.Run(() =>
+                    {
+                        var wafer = GetWaferById(temp.Key);
+
+                        if (wafer != null)
+                        {
+                            lock (fileWriteLock) // 使用锁保护写入操作
+                            {
+                                using (var sw = new StreamWriter(output_csv_file, true, Encoding.UTF8))
+                                {
+                                    sw.WriteLine(temp.Key + "," + wafer.Chips.Count);
+                                }
+                            }
+                        }
+                    })); 
+                }
+                await Task.WhenAll(tasks); // 等待所有任务完成
+                MessageBox.Show("导入文件成功！");
+            }
+            else
+            {
+                MessageBox.Show("请输入文件！");
+            }
+            EnableAllButtons();
+        }
+
+        int[] col2;
+
+        private double CalculateNewValue(double currentValue, string operation, double value)
+        {
+            switch (operation)
+            {
+                case "加":
+                    return currentValue + value;
+                case "减":
+                    return currentValue - value;
+                case "乘":
+                    return currentValue * value;
+                case "除":
+                    if (value == 0)
+                    {
+                        MessageBox.Show("Cannot divide by zero.");
+                        return currentValue;
+                    }
+                    return currentValue / value;
+                default:
+                    return currentValue;
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged(string name)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+        private void DisableAllButtons()
+        {
+            foreach (var control in MainGrid.Children)
+            {
+                if (control is Button button)
+                {
+                    button.IsEnabled = false;
+                }
+            }
+        }
+
+        private void EnableAllButtons()
+        {
+            foreach (var control in MainGrid.Children)
+            {
+                if (control is Button button)
+                {
+                    button.IsEnabled = true;
+                }
+            }
+        }
+        private async void runButton_Click(object sender, RoutedEventArgs e)
+        {
+            DisableAllButtons();
+            Progress = 0;
+
             string filePath = BinName.Text;
-            if (!int.TryParse(dimensionTextBox.Text, out dim))
+
+            if (!int.TryParse(dimensionTextBox.Text, out int dim))
             {
                 System.Windows.MessageBox.Show("Invalid dimension value. Please enter a valid integer.");
                 return;
@@ -236,6 +491,7 @@ namespace 产出分布计算
                     {"HW2", 74}, {"WLC2", 76}
                 };
 
+
             int dimension = dim;
             if (dimension < 1 || dimension > 4)
             {
@@ -244,43 +500,61 @@ namespace 产出分布计算
 
             double[] minValues = new double[dimension];
             double[] stepSizes = new double[dimension];
+            double[] fixNums = new double[dimension];
             int[] counts = new int[dimension];
             int[] col = new int[dimension];
-            int[] col2 = new int[dimension];
+            string[] ops = new string[dimension];
+            string output_excel_file = "";
+            // 处理并输出结果
+            string fileExtension = ".xlsx";
+            string outputFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OutputFolder");
 
             if (dimension >= 1)
             {
                 if (dict.ContainsKey(this.para1.Text.ToUpper())) col[0] = dict[this.para1.Text.ToUpper()];
-                if (dict2.ContainsKey(this.para1.Text.ToUpper())) col2[0] = dict2[this.para1.Text.ToUpper()];
                 minValues[0] = double.Parse(this.para1min.Text);
                 stepSizes[0] = double.Parse(this.para1rta.Text);
                 counts[0] = int.Parse(this.para1num.Text);
+                fixNums[0] = Math.Round(double.Parse(this.fix1num.Text),6);
+                ops[0] = oprBox1.Text;
+                output_excel_file = System.IO.Path.Combine(outputFolder, $"{filePath}_{para1.Text}");
             }
+
             if (dimension >= 2)
             {
                 if (dict.ContainsKey(this.para2.Text.ToUpper())) col[1] = dict[this.para2.Text.ToUpper()]; 
-                if (dict2.ContainsKey(this.para2.Text.ToUpper())) col2[1] = dict2[this.para2.Text.ToUpper()];
                 minValues[1] = double.Parse(this.para2min.Text);
                 stepSizes[1] = double.Parse(this.para2rta.Text);
                 counts[1] = int.Parse(this.para2num.Text);
+                fixNums[1] = Math.Round(double.Parse(this.fix2num.Text), 6);
+                ops[1] = oprBox2.Text;
+                output_excel_file = System.IO.Path.Combine(outputFolder, $"{filePath}_{para1.Text}_{para2.Text}");
+
             }
+
             if (dimension >= 3)
             {
                 if (dict.ContainsKey(this.para3.Text.ToUpper())) col[2] = dict[this.para3.Text.ToUpper()];
-                if (dict2.ContainsKey(this.para3.Text.ToUpper())) col2[2] = dict2[this.para3.Text.ToUpper()];
                 minValues[2] = double.Parse(this.para3min.Text);
                 stepSizes[2] = double.Parse(this.para3rta.Text);
                 counts[2] = int.Parse(this.para3num.Text);
+                fixNums[2] = Math.Round(double.Parse(this.fix3num.Text), 6);
+                ops[2] = oprBox3.Text;
+                output_excel_file = System.IO.Path.Combine(outputFolder, $"{filePath}_{para1.Text}_{para2.Text}_{para3.Text}");
+
             }
+
             if (dimension >= 4)
             {
                 MessageBox.Show("4维数据产出分布未开发！");
                 return;
                 if (dict.ContainsKey(this.para4.Text.ToUpper())) col[3] = dict[this.para4.Text.ToUpper()];
-                if (dict2.ContainsKey(this.para4.Text.ToUpper())) col2[3] = dict2[this.para4.Text.ToUpper()];
                 minValues[3] = double.Parse(this.para4min.Text);
                 stepSizes[3] = double.Parse(this.para4rta.Text);
                 counts[3] = int.Parse(this.para4num.Text);
+                fixNums[3] = Math.Round(double.Parse(this.fix4num.Text), 6);
+                ops[3] = oprBox4.Text;
+                output_excel_file = System.IO.Path.Combine(outputFolder, $"{filePath}_{para1.Text}_{para2.Text}_{para3.Text}_{para4.Text}");
             }
 
             // 存储生成的pair数组
@@ -325,101 +599,93 @@ namespace 产出分布计算
                 matrix4D = new int[rows + 2, cols + 2, depth + 2, time + 2];
             }
 
-            // 处理并输出结果
             
-            string outputFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OutputFolder");
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Multiselect = true;
-            openFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
-            string output_excel_file = System.IO.Path.Combine(outputFolder, $"{filePath}.xlsx");
-            // 检查文件夹是否存在
-            if (Directory.Exists(outputFolder))
+            // 检查文件是否存在并生成唯一文件名
+            int counter = 1;
+            while (File.Exists(output_excel_file + fileExtension))
             {
-                // 尝试获取文件夹中的所有文件
-                string[] files = Directory.GetFiles(outputFolder);
-
-                // 遍历文件夹中的所有文件
-                foreach (string file in files)
-                {
-                    try
-                    {
-                        // 尝试打开文件，如果文件已经被打开会引发 IOException 异常
-                        using (FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.None))
-                        {
-                            // 文件未被打开，继续处理
-                        }
-                    }
-                    catch (IOException)
-                    {
-                        // 文件被打开，弹出提示框显示
-                        MessageBox.Show($"文件 {file} 已被打开，请关闭后重新尝试删除文件夹。", "文件已打开", MessageBoxButton.OK, MessageBoxImage.Exclamation);
-                        return; // 终止方法的执行，不继续删除文件夹
-                    }
-                }
-
-                // 删除文件夹及其内容
-                Directory.Delete(outputFolder, true);
+                string newFileName = $"{output_excel_file}_{counter}";
+                output_excel_file = System.IO.Path.Combine(outputFolder, newFileName);
+                counter++;
             }
+
+            // 检查文件夹是否存在
+            if (!Directory.Exists(outputFolder))
+            {
+                Directory.CreateDirectory(outputFolder);
+            }
+
+            DateTime startTime = DateTime.Now; // 记录开始时间
+
+            Progress = 0;
+
+            progressBar.Value = 0;
+
+            int processedLines = 0;
+
+            int totalWafers = waferList.Count;
 
             // 创建文件夹
-            Directory.CreateDirectory(outputFolder);
-            if (openFileDialog.ShowDialog() == true)
+            List<Task> tasks = new List<Task>(); // 声明 tasks 列表
+            output_excel_file = output_excel_file + fileExtension;
+            foreach (var wafer in waferList)
             {
-                DateTime startTime = DateTime.Now; // 记录开始时间
-
-                List<Task> tasks = new List<Task>(); // 声明 tasks 列表
-
-                // 尝试打开文件，如果文件已经被打开会引发 IOException 异常
-                foreach (string filename in openFileDialog.FileNames)
+                tasks.Add(Task.Run(() =>
                 {
-                    tasks.Add( Task.Run(() => ProcessFile(filename, dimension, pairs,col2))); // 使用多线程处理文件
-                    if (breakFlag)
+
+                    ProcessFile(wafer.Value, dimension, pairs, fixNums, ops);
+
+                    Dispatcher.Invoke(() =>
                     {
-                        break;
+                        processedLines++;
+                        Progress = processedLines * 100 / totalWafers;
+                        progressBar.Value = Progress;
+                        progressText.Text = $"{Progress}%";
+                    });
+
+                }));
+            }
+            // 等待所有任务完成
+            await Task.WhenAll(tasks);
+
+            // 写入处理后的数据到 Excel 文件
+            WriteMatrix(pairs, dim, output_excel_file);
+
+            if (!breakFlag)
+            {
+                DateTime endTime = DateTime.Now; // 记录结束时间
+                TimeSpan totalTime = endTime - startTime; // 计算运行时间
+                                                            // 弹出消息框询问是否打开文件
+                MessageBoxResult result = MessageBox.Show("Excel 文件已导出到 " + output_excel_file + $", 总共耗时：{totalTime.TotalSeconds} 秒 , \n是否打开该文件？", "导出成功", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                // 根据用户的选择执行相应的操作
+                if (result == MessageBoxResult.Yes)
+                {
+                    // 打开文件
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo { FileName = output_excel_file, UseShellExecute = true });
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("打开文件失败：" + ex.Message, "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
-                await Task.WhenAll(tasks); // 等待所有任务完成
-                WriteMatrix(pairs, dim, output_excel_file);
-
-                if (!breakFlag)
+                else
                 {
-                    DateTime endTime = DateTime.Now; // 记录结束时间
-                    TimeSpan totalTime = endTime - startTime; // 计算运行时间
-                                                              // 弹出消息框询问是否打开文件
-                    MessageBoxResult result = MessageBox.Show("Excel 文件已导出到 " + output_excel_file + $", 总共耗时：{totalTime.TotalSeconds} 秒 , \n是否打开该文件？", "导出成功", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-                    // 根据用户的选择执行相应的操作
-                    if (result == MessageBoxResult.Yes)
-                    {
-                        // 打开文件
-                        try
-                        {
-                            Process.Start(new ProcessStartInfo { FileName = output_excel_file, UseShellExecute = true });
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("打开文件失败：" + ex.Message, "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                        }
-                    }
-                    else
-                    {
-                        // 处理文件名为空的情况
-                        MessageBox.Show("Excel 文件: " + output_excel_file + "导出出错！");
-                    }
+                    // 处理文件名为空的情况
+                    MessageBox.Show("Excel 文件: " + output_excel_file + "导出出错！");
                 }
-
             }
-            else
-            {
-                MessageBox.Show("请输入文件！");
-            }
+            EnableAllButtons();
         }
-        void Generate1DMatrix(List<Chip> chips, List<(double, double)>[] pairs)
+        void Generate1DMatrix(List<Chip> chips, List<(double, double)>[] pairs, double[]fixNums,string[] ops)
         {
-
+            // 执行计算或处理任务
             foreach (var chip in chips)
             {
-                int index = GetRangeIndex(chip.GetDimensionValue(0), pairs[0]);
+                int index = GetRangeIndex(CalculateNewValue(chip.GetDimensionValue(0), ops[0], fixNums[0]), pairs[0]);
+
                 if (index >= 0)
                 {
                     matrix1D[index]++;
@@ -427,28 +693,29 @@ namespace 产出分布计算
             }
         }
 
-        void Generate2DMatrix(List<Chip> chips, List<(double, double)>[] pairs)
+        void Generate2DMatrix(List<Chip> chips, List<(double, double)>[] pairs, double[] fixNums, string[] ops)
         {
-
-            foreach (var chip in chips)
+            foreach(var chip in chips)
             {
-                int rowIndex = GetRangeIndex(chip.GetDimensionValue(0), pairs[0]);
-                int colIndex = GetRangeIndex(chip.GetDimensionValue(1), pairs[1]);
+                int rowIndex = GetRangeIndex(CalculateNewValue(chip.GetDimensionValue(0), ops[0], fixNums[0]), pairs[0]);
+                int colIndex = GetRangeIndex(CalculateNewValue(chip.GetDimensionValue(1), ops[1], fixNums[1]), pairs[1]);
 
                 if (rowIndex >= 0 && colIndex >= 0)
                 {
                     matrix2D[rowIndex, colIndex]++;
                 }
             }
+
         }
 
-        void Generate3DMatrix(List<Chip> chips, List<(double, double)>[] pairs)
+        void Generate3DMatrix(List<Chip> chips, List<(double, double)>[] pairs, double[] fixNums, string[] ops)
         {
+            // 执行计算或处理任务
             foreach (var chip in chips)
             {
-                int rowIndex = GetRangeIndex(chip.GetDimensionValue(0), pairs[0]);
-                int colIndex = GetRangeIndex(chip.GetDimensionValue(1), pairs[1]);
-                int depthIndex = GetRangeIndex(chip.GetDimensionValue(2), pairs[2]);
+                int rowIndex = GetRangeIndex(CalculateNewValue(chip.GetDimensionValue(0), ops[0], fixNums[0]), pairs[0]);
+                int colIndex = GetRangeIndex(CalculateNewValue(chip.GetDimensionValue(1), ops[1], fixNums[1]), pairs[1]);
+                int depthIndex = GetRangeIndex(CalculateNewValue(chip.GetDimensionValue(2), ops[2], fixNums[2]), pairs[2]);
 
                 if (rowIndex >= 0 && colIndex >= 0 && depthIndex >= 0)
                 {
@@ -457,15 +724,14 @@ namespace 产出分布计算
             }
         }
 
-        void Generate4DMatrix(List<Chip> chips, List<(double, double)>[] pairs)
-        {
-
+        void Generate4DMatrix(List<Chip> chips, List<(double, double)>[] pairs, double[] fixNums, string[] ops)
+        {            // 执行计算或处理任务
             foreach (var chip in chips)
             {
-                int rowIndex = GetRangeIndex(chip.GetDimensionValue(0), pairs[0]);
-                int colIndex = GetRangeIndex(chip.GetDimensionValue(1), pairs[1]);
-                int depthIndex = GetRangeIndex(chip.GetDimensionValue(2), pairs[2]);
-                int timeIndex = GetRangeIndex(chip.GetDimensionValue(3), pairs[3]);
+                int rowIndex = GetRangeIndex(CalculateNewValue(chip.GetDimensionValue(0), ops[0], fixNums[0]), pairs[0]);
+                int colIndex = GetRangeIndex(CalculateNewValue(chip.GetDimensionValue(1), ops[1], fixNums[1]), pairs[1]);
+                int depthIndex = GetRangeIndex(CalculateNewValue(chip.GetDimensionValue(2), ops[2], fixNums[2]), pairs[2]);
+                int timeIndex = GetRangeIndex(CalculateNewValue(chip.GetDimensionValue(3), ops[3], fixNums[3]), pairs[3]);
 
                 if (rowIndex >= 0 && colIndex >= 0 && depthIndex >= 0 && timeIndex >= 0)
                 {
@@ -473,7 +739,6 @@ namespace 产出分布计算
                 }
             }
         }
-
         int GetRangeIndex(double value, List<(double, double)> pairs)
         {
             for (int i = 0; i < pairs.Count; i++)
@@ -491,23 +756,26 @@ namespace 产出分布计算
             }
             return -1;  // 不在任何范围内
         }
-
         void PrintAndWrite1DMatrix(int[] matrix, List<(double, double)>[] pairs, string output_excel_file)
         {
             string p1 = this.para1.Text.ToUpper();
 
             int rows = matrix.GetLength(0);
 
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             ExcelPackage excelPackage = new ExcelPackage();
             ExcelWorksheet worksheet = excelPackage.Workbook.Worksheets.Add("matrix1D");
 
             worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
-            worksheet.Cells[1, 1].Value = ($"{p1}");
-            int row1 = 0;
+            worksheet.Cells[1, 1].Value = BinName.Text;
+            worksheet.Cells[1, 2].Value = "total";
+            worksheet.Cells[1, 3].Value = wafers.Count;
+
+            int row1 = 1;
             double rowstotal = 0;
+            worksheet.Cells[1 + row1, 1].Value = ($"{p1}");
             
             for (int i = 0; i < rows; i++)
             {
@@ -534,7 +802,7 @@ namespace 产出分布计算
             int row2 = row1 + 2 + rows;
             int col2 = 2;
             // 设置第一行的字体为微软雅黑、大小为14号
-            using (ExcelRange range = worksheet.Cells["A1:" + NumberToExcelColumn(col2) + $"{row2}"])
+            using (ExcelRange range = worksheet.Cells["A2:" + NumberToExcelColumn(col2) + $"{row2}"])
             {
                 range.Style.Font.Name = "微软雅黑";
                 range.Style.Font.Size = 11;
@@ -609,15 +877,20 @@ namespace 产出分布计算
             int rows = matrix.GetLength(0);
             int cols = matrix.GetLength(1);
 
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             ExcelPackage excelPackage = new ExcelPackage();
             ExcelWorksheet worksheet = excelPackage.Workbook.Worksheets.Add("matrix2D");
 
             worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
-            worksheet.Cells[1, 1].Value = ($"{p1}/{p2}");
-            int row1 = 0;
+            worksheet.Cells[1, 1].Value = BinName.Text;
+            worksheet.Cells[1, 2].Value = "total";
+            worksheet.Cells[1, 3].Value = wafers.Count;
+
+            int row1 = 1;
+            worksheet.Cells[1+ row1, 1].Value = ($"{p1}/{p2}");
+
             for (int j = 0; j < cols; j++)
             {
                 if (j == 0)
@@ -658,7 +931,7 @@ namespace 产出分布计算
                 worksheet.Cells[row1 + 2 + i, cols + 2].Value = rowstotal;
             }
             worksheet.Cells[row1 + 2 + rows, 1].Value = "Sum";
-            CreateExcelWithColorScale(worksheet, 1, 1, row1 + 2 + rows, cols + 2);
+            CreateExcelWithColorScale(worksheet, 1 + row1, 1, row1 + 2 + rows, cols + 2);
             double matrixTotal = 0;
             for (int j = 0; j < cols; j++)
             {
@@ -674,8 +947,8 @@ namespace 产出分布计算
             worksheet.Cells[row1 + 2 + rows, cols + 2].Value = matrixTotal;
             total += matrixTotal;
 
-            int nextRows = rows + 3;
-            worksheet.Cells[nextRows + 1, 1].Value = ($"{p1}/{p2}");
+            int nextRows = rows + 3 + row1 - 1;
+            worksheet.Cells[nextRows + 1 + 1, 1].Value = ($"{p1}/{p2}");
             for (int j = 0; j < cols; j++)
             {
                 if (j == 0)
@@ -718,7 +991,7 @@ namespace 产出分布计算
                 worksheet.Cells[nextRows + row1 + 2 + i, cols + 2].Style.Numberformat.Format = "0.00%";
             }
             worksheet.Cells[nextRows + row1 + 2 + rows, 1].Value = "Sum";
-            CreateExcelWithColorScale(worksheet, nextRows + 1, 1, nextRows + row1 + 2 + rows, cols + 2);
+            CreateExcelWithColorScale(worksheet, nextRows + 1 + 1, 1, nextRows + row1 + 2 + rows, cols + 2);
 
             for (int j = 0; j < cols; j++)
             {
@@ -797,31 +1070,39 @@ namespace 产出分布计算
             int cols = matrix.GetLength(1);
             int depth = matrix.GetLength(2);
 
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             ExcelPackage excelPackage = new ExcelPackage();
             ExcelWorksheet worksheet = excelPackage.Workbook.Worksheets.Add("matrix3D");
 
             worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
+            worksheet.Cells[1, 1].Value = BinName.Text;
+            worksheet.Cells[1, 2].Value = "total";
+            worksheet.Cells[1, 3].Value = wafers.Count;
+
+            int row11 = 1;
+
             for (int k = 0; k < depth; k++)
             {
+                
                 if (k == 0)
                 {
-                    worksheet.Cells[k * (rows +4) + 1,1].Value = ($"{p3} <{pairs[2][0].Item1}");
-                    worksheet.Cells[k * (rows +4) + 2,1].Value = ($"{p1}/{p2}");
+                    worksheet.Cells[k * (rows +4) + 1 + row11, 1].Value = ($"{p3} <{pairs[2][0].Item1}");
+                    worksheet.Cells[k * (rows +4) + 2 + row11, 1].Value = ($"{p1}/{p2}");
                 }
                 else if (k == depth - 1)
                 {
-                    worksheet.Cells[k * (rows +4) + 1,1].Value = ($"{p3} >{pairs[2][k-2].Item2}");
-                    worksheet.Cells[k * (rows +4) + 2,1].Value = ($"{p1}/{p2}");
+                    worksheet.Cells[k * (rows +4) + 1 + row11, 1].Value = ($"{p3} >{pairs[2][k-2].Item2}");
+                    worksheet.Cells[k * (rows +4) + 2 + row11, 1].Value = ($"{p1}/{p2}");
                 }
                 else
                 {
-                    worksheet.Cells[k * (rows +4) + 1,1].Value = ($"{p3} {pairs[2][k - 1].Item1}-{pairs[2][k - 1].Item2}");
-                    worksheet.Cells[k * (rows +4) + 2,1].Value = ($"{p1}/{p2}");
+                    worksheet.Cells[k * (rows +4) + 1 + row11, 1].Value = ($"{p3} {pairs[2][k - 1].Item1}-{pairs[2][k - 1].Item2}");
+                    worksheet.Cells[k * (rows +4) + 2 + row11, 1].Value = ($"{p1}/{p2}");
                 }
-                int row1 = k * (rows + 4) + 1;
+
+                int row1 = k * (rows + 4) + 1 + 1;
                 for (int j = 0; j < cols; j++)
                 {
                     if (j == 0)
@@ -879,7 +1160,7 @@ namespace 产出分布计算
                 total += matrixTotal;
             }
 
-            int nextRows = (depth - 1) * (rows + 4) + 3 + rows + 2;
+            int nextRows = (depth - 1) * (rows + 4) + 3 + rows + 2 + 1;
 
             for (int k = 0; k < depth; k++)
             {
@@ -898,6 +1179,7 @@ namespace 产出分布计算
                     worksheet.Cells[nextRows + k * (rows + 4) + 1, 1].Value = ($"{p3} {pairs[2][k - 1].Item1}-{pairs[2][k - 1].Item2}");
                     worksheet.Cells[nextRows + k * (rows + 4) + 2, 1].Value = ($"{p1}/{p2}");
                 }
+
                 int row1 = k * (rows + 4) + 1;
                 for (int j = 0; j < cols; j++)
                 {
@@ -994,7 +1276,7 @@ namespace 产出分布计算
 
         void PrintAndWrite4DMatrix(int[,,,] matrix, List<(double, double)>[] pairs, string output_excel_file)
         {
-            
+
             //int rows = matrix.GetLength(0);
             //int cols = matrix.GetLength(1);
             //int depth = matrix.GetLength(2);
@@ -1013,6 +1295,8 @@ namespace 产出分布计算
 
             //worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             //worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+
+            //worksheet.Cells[1, 3].Value = ($"{wafers.Count}");
 
             //for (int t = 0; t < time; t++)
             //{
@@ -1468,8 +1752,8 @@ namespace 产出分布计算
                             pairs[i] = new List<(double, double)>();
                             for (int j = 0; j < counts[i]; j++)
                             {
-                                double first = minValues[i] + j * stepSizes[i];
-                                double second = first + stepSizes[i];
+                                double first = Math.Round(minValues[i] + j * stepSizes[i], 6);
+                                double second = Math.Round(first + stepSizes[i], 6);
                                 pairs[i].Add((first, second));
                             }
                         }
@@ -1477,8 +1761,6 @@ namespace 产出分布计算
                         // 生成全排列结果
                         var result = GeneratePermutations(pairs);
                         SaveToCsv(result, writer,col);
-
-                    
                     }
                     catch (Exception ex)
                     {
