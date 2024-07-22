@@ -19,6 +19,8 @@ using System.IO.MemoryMappedFiles;
 using System.ComponentModel;
 using System.Windows.Shapes;
 using System.Data;
+using System.Text.Json;
+using System.Net;
 
 namespace 产出分布计算
 {
@@ -37,6 +39,34 @@ namespace 产出分布计算
                 OnPropertyChanged("Progress");
             }
         }
+        public class TextBoxContent
+        {
+            public string BinName { get; set; }
+            public string BinSetting { get; set; }
+            public string Dimension { get; set; }
+            public string FilePath { get; set; }
+            public string Para1 { get; set; }
+            public string Para1Min { get; set; }
+            public string Para1Rta { get; set; }
+            public string Para1Num { get; set; }
+            public string Fix1num { get; set; }
+            public string Para2 { get; set; }
+            public string Para2Min { get; set; }
+            public string Para2Rta { get; set; }
+            public string Para2Num { get; set; }
+            public string Fix2num { get; set; }
+            public string Para3 { get; set; }
+            public string Para3Min { get; set; }
+            public string Para3Rta { get; set; }
+            public string Para3Num { get; set; }
+            public string Fix3num { get; set; }
+            public string Para4 { get; set; }
+            public string Para4Min { get; set; }
+            public string Para4Rta { get; set; }
+            public string Para4Num { get; set; }
+            public string Fix4num { get; set; }
+        }
+
         private readonly object fileWriteLock = new object(); // 用于保护文件写入操作的锁对象
         private readonly object parameterlockObject = new object();
         readonly object lockObject = new object();
@@ -90,12 +120,103 @@ namespace 产出分布计算
                 return Chips.Count;
             }
         }
+        private void LoadTextBoxContent()
+        {
+            try
+            {
+                string json = File.ReadAllText("config.json");
+                TextBoxContent content = JsonSerializer.Deserialize<TextBoxContent>(json);
+                BinName.Text = content.BinName;
+                BinSetting.Text = content.BinSetting;
+                dimensionTextBox.Text = content.Dimension;
+                filePath.Text = content.FilePath;
+                para1.Text = content.Para1;
+                para1min.Text = content.Para1Min;
+                para1rta.Text = content.Para1Rta;
+                para1num.Text = content.Para1Num;
+                fix1num.Text = content.Fix1num;
+                para2.Text = content.Para2;
+                para2min.Text = content.Para2Min;
+                para2rta.Text = content.Para2Rta;
+                para2num.Text = content.Para2Num;
+                fix2num.Text = content.Fix2num;
+                para3.Text = content.Para3;
+                para3min.Text = content.Para3Min;
+                para3rta.Text = content.Para3Rta;
+                para3num.Text = content.Para3Num;
+                fix3num.Text = content.Fix3num;
+                para4.Text = content.Para4;
+                para4min.Text = content.Para4Min;
+                para4rta.Text = content.Para4Rta;
+                para4num.Text = content.Para4Num;
+                fix4num.Text = content.Fix4num;
+            }
+            catch (Exception ex)
+            {
+                
+            }
+        }
+
+        private void Page_Unloaded(object sender, RoutedEventArgs e)
+        {
+            SaveTextBoxContent();
+        }
+
+        private void SaveTextBoxContent()
+        {
+            TextBoxContent content = new TextBoxContent
+            {
+                BinName = BinName.Text,
+                BinSetting = BinSetting.Text,
+                Dimension = dimensionTextBox.Text,
+                FilePath = filePath.Text,
+                Para1 = para1.Text,
+                Para1Min = para1min.Text,
+                Para1Rta = para1rta.Text,
+                Para1Num = para1num.Text,
+                Fix1num  = fix1num.Text,
+                Para2 = para2.Text,
+                Para2Min = para2min.Text,
+                Para2Rta = para2rta.Text,
+                Para2Num = para2num.Text,
+                Fix2num = fix2num.Text,
+
+                Para3 = para3.Text,
+                Para3Min = para3min.Text,
+                Para3Rta = para3rta.Text,
+                Para3Num = para3num.Text,
+                Fix3num = fix3num.Text,
+
+                Para4 = para4.Text,
+                Para4Min = para4min.Text,
+                Para4Rta = para4rta.Text,
+                Para4Num = para4num.Text,
+                Fix4num = fix4num.Text,
+
+            };
+
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+
+            string json = JsonSerializer.Serialize(content, options);
+            File.WriteAllText("config.json", json);
+        }
 
         public Page1()
         {
             InitializeComponent();
             this.KeepAlive = true;
             DataContext = this;
+            LoadTextBoxContent();
+            this.Unloaded += Page_Unloaded; // 订阅 Unloaded 事件
+            Application.Current.Exit += Application_Exit; // 订阅 Exit 事件
+        }
+
+        private void Application_Exit(object sender, ExitEventArgs e)
+        {
+            SaveTextBoxContent();
         }
 
         void WriteMatrix(List<(double, double)>[] pairs, int dim, string output_excel_file)
@@ -136,7 +257,7 @@ namespace 产出分布计算
                     {"IR2", 51}, {"ESD1PASS", 52}, {"ESD2PASS", 53}, {"PosX", 54}, {"PosY", 55}
                 };
 
-        private Dictionary<string,Wafer> waferList = new Dictionary<string, Wafer>();
+        private Dictionary<string, Wafer> waferList = new Dictionary<string, Wafer>();
 
         private async void importWaferFiles(string filename, int dim, int[] col2, string outputCsvFile)
         {
@@ -282,6 +403,7 @@ namespace 产出分布计算
         private async void importButton_Click(object sender, RoutedEventArgs e)
         {
             DisableAllButtons();
+            waferList.Clear();
 
             if (!int.TryParse(dimensionTextBox.Text, out int dim))
             {
@@ -323,14 +445,32 @@ namespace 产出分布计算
 
             string output_csv_file = System.IO.Path.Combine(outputFolder, "output.csv");
             string not_find_csv_file = System.IO.Path.Combine(outputFolder, "NotFindFile.csv");
-            if (File.Exists(output_csv_file))
+            try
             {
-                File.Delete(output_csv_file);
+                if (File.Exists(output_csv_file))
+                {
+                    File.Delete(output_csv_file);
+                }
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show($"Error deleting file {output_csv_file}: {ex.Message}");
+                EnableAllButtons();
+                return;
             }
 
-            if (File.Exists(not_find_csv_file))
+            try
             {
-                File.Delete(not_find_csv_file);
+                if (File.Exists(not_find_csv_file))
+                {
+                    File.Delete(not_find_csv_file);
+                }
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show($"Error deleting file {not_find_csv_file}: {ex.Message}");
+                EnableAllButtons();
+                return;
             }
 
             string filePathText = filePath.Text;
@@ -791,7 +931,10 @@ namespace 产出分布计算
             int row2 = row1 + 2 + rows;
             int col2 = 2;
             // 设置第一行的字体为微软雅黑、大小为14号
-            using (ExcelRange range = worksheet.Cells["A2:" + NumberToExcelColumn(col2) + $"{row2}"])
+            // 获取单元格范围对象
+            var address = new ExcelAddress(2, 1, row2, col2);
+            
+            using (ExcelRange range = worksheet.Cells[address.Address])
             {
                 range.Style.Font.Name = "微软雅黑";
                 range.Style.Font.Size = 11;
@@ -848,6 +991,7 @@ namespace 产出分布计算
             conditionalFormatting.HighValue.Color = ColorTranslator.FromHtml("#F8696B"); // Red
 
             // 获取单元格范围对象
+            address = new ExcelAddress(row1, col1, row2+1, col2);
             ExcelRange range = worksheet.Cells[address.Address];
 
             // 设置边框样式
@@ -862,7 +1006,6 @@ namespace 产出分布计算
             string p1 = this.para1.Text.ToUpper();
             string p2 = this.para2.Text.ToUpper();
 
-            double total = 0;
             int rows = matrix.GetLength(0);
             int cols = matrix.GetLength(1);
 
@@ -873,12 +1016,36 @@ namespace 产出分布计算
             worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
-            worksheet.Cells[1, 1].Value = BinName.Text;
-            worksheet.Cells[1, 2].Value = "total";
-            worksheet.Cells[1, 3].Value = waferList.Count;
+            double matrixTotal = 0;
+            double total = 0;
+            double[] rowTotals = new double[rows];
+
+            for (int i = 0; i < rows; i++)
+            {
+                double rowtotal = 0;
+                for (int j = 0; j < cols; j++)
+                {
+                    rowtotal += matrix[i, j];
+                    matrixTotal += matrix[i, j];
+                }
+                rowTotals[i] = rowtotal;
+            }
+            total += matrixTotal;
+
 
             int row1 = 1;
-            worksheet.Cells[1+ row1, 1].Value = ($"{p1}/{p2}");
+
+            worksheet.Cells[row1, 1].Value = BinName.Text;
+            worksheet.Cells[row1, 2].Value = "片量";
+            worksheet.Cells[row1, 3].Value = waferList.Count;
+            worksheet.Cells[row1, 8].Value = "总计百分比";
+            // 获取单元格范围对象
+            var address = new ExcelAddress(row1, 1, row1, 8);
+            ExcelRange range = worksheet.Cells[address.Address];
+            range.Style.Font.Bold = true;
+            range.Style.Font.Color.SetColor(System.Drawing.Color.Red);
+
+            worksheet.Cells[row1 + 1, 1].Value = ($"{p1}/{p2}");
 
             for (int j = 0; j < cols; j++)
             {
@@ -888,7 +1055,7 @@ namespace 产出分布计算
                 }
                 else if (j == cols - 1)
                 {
-                    worksheet.Cells[row1 + 1, j + 2].Value = ($">{pairs[1][j - 2].Item2}");
+                    worksheet.Cells[row1 + 1, j + 2].Value = ($">{pairs[1][j -2].Item2}");
                 }
                 else
                 {
@@ -915,13 +1082,14 @@ namespace 产出分布计算
                 for (int j = 0; j < cols; j++)
                 {
                     rowstotal += matrix[i, j];
-                    worksheet.Cells[row1 + 2 + i, j + 2].Value = (matrix[i, j]);
+                    worksheet.Cells[row1 + 1 + 1 + i, j + 2].Value = (matrix[i, j]) / total;
+                    worksheet.Cells[row1 + 1 + 1 + i, j + 2].Style.Numberformat.Format = "0.00%";
                 }
-                worksheet.Cells[row1 + 2 + i, cols + 2].Value = rowstotal;
+                worksheet.Cells[row1 + 1 + 1 + i, cols + 2].Value = rowstotal / total;
+                worksheet.Cells[row1 + 1 + 1 + i, cols + 2].Style.Numberformat.Format = "0.00%";
             }
-            worksheet.Cells[row1 + 2 + rows, 1].Value = "Sum";
-            CreateExcelWithColorScale(worksheet, 1 + row1, 1, row1 + 2 + rows, cols + 2);
-            double matrixTotal = 0;
+            worksheet.Cells[row1 + 1 + 1 + rows, 1].Value = "Sum";
+
             for (int j = 0; j < cols; j++)
             {
                 double colstotal = 0;
@@ -929,58 +1097,81 @@ namespace 产出分布计算
                 for (int i = 0; i < rows; i++)
                 {
                     colstotal += matrix[i, j];
-                    matrixTotal += matrix[i, j];
                 }
-                worksheet.Cells[row1 + 2 + rows, j + 2].Value = colstotal;
+                worksheet.Cells[row1 + 1 + 1 + rows, j + 2].Value = colstotal / total;
+                worksheet.Cells[row1 + 1 + 1 + rows, j + 2].Style.Numberformat.Format = "0.00%";
             }
-            worksheet.Cells[row1 + 2 + rows, cols + 2].Value = matrixTotal;
-            total += matrixTotal;
+            worksheet.Cells[row1 + 1 + 1 + rows, cols + 2].Value = matrixTotal / total;
+            worksheet.Cells[row1 + 1 + 1 + rows, cols + 2].Style.Numberformat.Format = "0.00%";
 
-            int nextRows = rows + 3 + row1 - 1;
-            worksheet.Cells[nextRows + 1 + 1, 1].Value = ($"{p1}/{p2}");
+
+            CreateExcelWithColorScale(worksheet, row1 + 1 , 1, row1 + 1 + rows, cols + 2);
+
+            // next rows total percent matrix 
+            // next rows total percent matrix 
+            // next rows total percent matrix 
+            // next rows total percent matrix 
+            // next rows total percent matrix 
+            // next rows total percent matrix 
+            // next rows total percent matrix 
+            // next rows total percent matrix 
+            row1 = rows + 2 + row1;
+            worksheet.Cells[row1 + 2, 1].Value = BinName.Text;
+            worksheet.Cells[row1 + 2, 2].Value = "片量";
+            worksheet.Cells[row1 + 2, 3].Value = waferList.Count;
+            worksheet.Cells[row1 + 2, 8].Value = "行百分比";
+
+            address = new ExcelAddress(row1 + 2, 1, row1 + 2, 8);
+            range = worksheet.Cells[address.Address];
+            range.Style.Font.Bold = true;
+            range.Style.Font.Color.SetColor(System.Drawing.Color.Red);
+
+            row1 += 1;
+            worksheet.Cells[row1 + 2, 1].Value = ($"{p1}/{p2}");
             for (int j = 0; j < cols; j++)
             {
                 if (j == 0)
                 {
-                    worksheet.Cells[nextRows + row1 + 1, j + 2].Value = ($"<{pairs[1][0].Item1}");
+                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($"<{pairs[1][0].Item1}");
                 }
                 else if (j == cols - 1)
                 {
-                    worksheet.Cells[nextRows + row1 + 1, j + 2].Value = ($">{pairs[1][j - 2].Item2}");
+                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($">{pairs[1][j - 2].Item2}");
                 }
                 else
                 {
-                    worksheet.Cells[nextRows + row1 + 1, j + 2].Value = ($"{pairs[1][j - 1].Item1}-{pairs[1][j - 1].Item2}");
+                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($"{pairs[1][j - 1].Item1}-{pairs[1][j - 1].Item2}");
                 }
             }
-            worksheet.Cells[nextRows + row1 + 1, cols + 2].Value = "Sum";
+            worksheet.Cells[row1 + 1 + 1, cols + 2].Value = "Sum";
             for (int i = 0; i < rows; i++)
             {
                 double rowstotal = 0;
 
                 if (i == 0)
                 {
-                    worksheet.Cells[nextRows + row1 + 2 + i, 1].Value = ($"<{pairs[0][0].Item1}");
+                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($"<{pairs[0][0].Item1}");
                 }
                 else if (i == rows - 1)
                 {
-                    worksheet.Cells[nextRows + row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2].Item2}");
+                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($">{pairs[0][i - 2].Item2}");
                 }
                 else
                 {
-                    worksheet.Cells[nextRows + row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1].Item1}-{pairs[0][i - 1].Item2}");
+                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($"{pairs[0][i - 1].Item1}-{pairs[0][i - 1].Item2}");
                 }
                 for (int j = 0; j < cols; j++)
                 {
                     rowstotal += matrix[i, j];
-                    worksheet.Cells[nextRows + row1 + 2 + i, j + 2].Value = (matrix[i, j]) / total;
-                    worksheet.Cells[nextRows + row1 + 2 + i, j + 2].Style.Numberformat.Format = "0.00%";
+                    worksheet.Cells[row1 + 1 + 2 + i, j + 2].Value = (matrix[i, j]) / rowTotals[i];
+                    worksheet.Cells[row1 + 1 + 2 + i, j + 2].Style.Numberformat.Format = "0.00%";
                 }
-                worksheet.Cells[nextRows + row1 + 2 + i, cols + 2].Value = rowstotal / total;
-                worksheet.Cells[nextRows + row1 + 2 + i, cols + 2].Style.Numberformat.Format = "0.00%";
+                worksheet.Cells[row1 + 1 + 2 + i, cols + 2].Value = rowstotal / rowTotals[i];
+                worksheet.Cells[row1 + 1 + 2 + i, cols + 2].Style.Numberformat.Format = "0.00%";
             }
-            worksheet.Cells[nextRows + row1 + 2 + rows, 1].Value = "Sum";
-            CreateExcelWithColorScale(worksheet, nextRows + 1 + 1, 1, nextRows + row1 + 2 + rows, cols + 2);
+            worksheet.Cells[row1 + 1 + 2 + rows, 1].Value = "Sum";
+
+            
 
             for (int j = 0; j < cols; j++)
             {
@@ -990,23 +1181,102 @@ namespace 产出分布计算
                 {
                     colstotal += matrix[i, j];
                 }
-                worksheet.Cells[nextRows + row1 + 2 + rows, j + 2].Value = colstotal / total;
-                worksheet.Cells[nextRows + row1 + 2 + rows, j + 2].Style.Numberformat.Format = "0.00%";
+                worksheet.Cells[row1 + 1 + 2 + rows, j + 2].Value = colstotal / total;
+                worksheet.Cells[row1 + 1 + 2 + rows, j + 2].Style.Numberformat.Format = "0.00%";
             }
-            worksheet.Cells[nextRows + row1 + 2 + rows, cols + 2].Value = matrixTotal / total;
-            worksheet.Cells[nextRows + row1 + 2 + rows, cols + 2].Style.Numberformat.Format = "0.00%";
+            worksheet.Cells[row1 + 1 + 2 + rows, cols + 2].Value = matrixTotal / total;
+            worksheet.Cells[row1 + 1 + 2 + rows, cols + 2].Style.Numberformat.Format = "0.00%";
 
+            CreateExcelWithColorScale(worksheet, row1 + 1 + 1, 1, row1 + 1 + 1 + rows, cols + 2);
 
-            int row2 = nextRows + row1 + 2 + rows;
-            int col2 = cols + 2;
-            // 设置第一行的字体为微软雅黑、大小为14号
-            using (ExcelRange range = worksheet.Cells["A1:" + NumberToExcelColumn(col2) + $"{row2}"])
+            // next rows count matrix 
+            // next rows count matrix 
+            // next rows count matrix 
+            // next rows count matrix 
+            // next rows count matrix 
+            // next rows count matrix 
+            row1 = rows + 2 + row1 + 1;
+            worksheet.Cells[row1 + 2, 1].Value = BinName.Text;
+            worksheet.Cells[row1 + 2, 2].Value = "片量";
+            worksheet.Cells[row1 + 2, 3].Value = waferList.Count;
+            worksheet.Cells[row1 + 2, 8].Value = "颗粒数分布";
+
+            address = new ExcelAddress(row1 + 2, 1, row1 + 2, 8);
+            range = worksheet.Cells[address.Address];
+            range.Style.Font.Bold = true;
+            range.Style.Font.Color.SetColor(System.Drawing.Color.Red);
+
+            row1 += 1;
+            worksheet.Cells[row1 + 2, 1].Value = ($"{p1}/{p2}");
+            for (int j = 0; j < cols; j++)
             {
-                range.Style.Font.Name = "微软雅黑";
-                range.Style.Font.Size = 11;
+                if (j == 0)
+                {
+                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($"<{pairs[1][0].Item1}");
+                }
+                else if (j == cols - 1)
+                {
+                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($">{pairs[1][j - 2].Item2}");
+                }
+                else
+                {
+                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($"{pairs[1][j - 1].Item1}-{pairs[1][j - 1].Item2}");
+                }
+            }
+            worksheet.Cells[row1 + 1 + 1, cols + 2].Value = "Sum";
+            for (int i = 0; i < rows; i++)
+            {
+                double rowstotal = 0;
+
+                if (i == 0)
+                {
+                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($"<{pairs[0][0].Item1}");
+                }
+                else if (i == rows - 1)
+                {
+                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($">{pairs[0][i - 2].Item2}");
+                }
+                else
+                {
+                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($"{pairs[0][i - 1].Item1}-{pairs[0][i - 1].Item2}");
+                }
+                for (int j = 0; j < cols; j++)
+                {
+                    rowstotal += matrix[i, j];
+                    worksheet.Cells[row1 + 1 + 2 + i, j + 2].Value = (matrix[i, j]);
+                }
+                worksheet.Cells[row1 + 1 + 2 + i, cols + 2].Value = rowstotal;
+            }
+            worksheet.Cells[row1 + 1 + 2 + rows, 1].Value = "Sum";
+
+
+            for (int j = 0; j < cols; j++)
+            {
+                double colstotal = 0;
+
+                for (int i = 0; i < rows; i++)
+                {
+                    colstotal += matrix[i, j];
+                }
+                worksheet.Cells[row1 + 1 + 2 + rows, j + 2].Value = colstotal;
+            }
+            worksheet.Cells[row1 + 1 + 2 + rows, cols + 2].Value = matrixTotal;
+            CreateExcelWithColorScale(worksheet, row1 + 2, 1, row1 + 1 + 1 + rows, cols + 2);
+
+            int row2 = row1 + 1 + 2 + rows;
+            int col2 = cols + 2;
+
+            // 设置第一行的字体为微软雅黑、大小为14号
+            using (ExcelRange range1 = worksheet.Cells["A1:" + NumberToExcelColumn(col2) + $"{row2}"])
+            {
+                range1.Style.Font.Name = "微软雅黑";
+                range1.Style.Font.Size = 11;
             }
 
             worksheet.Cells.AutoFitColumns();
+
+            // 设置不显示网格线
+            worksheet.View.ShowGridLines = false;
 
             // 确保文件名不为空
             if (!string.IsNullOrEmpty(output_excel_file))
@@ -1067,8 +1337,28 @@ namespace 产出分布计算
             worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
             worksheet.Cells[1, 1].Value = BinName.Text;
-            worksheet.Cells[1, 2].Value = "total";
+            worksheet.Cells[1, 2].Value = "片量";
             worksheet.Cells[1, 3].Value = waferList.Count;
+            worksheet.Cells[1, 8].Value = "总计百分比";
+
+
+            // 获取单元格范围对象
+            var address = new ExcelAddress(1, 1, 1, 8);
+            ExcelRange range = worksheet.Cells[address.Address];
+            range.Style.Font.Bold = true;
+            range.Style.Font.Color.SetColor(System.Drawing.Color.Red);
+
+            for (int k = 0; k < depth; k++)
+            {
+                for (int j = 0; j < cols; j++)
+                {
+
+                    for (int i = 0; i < rows; i++)
+                    {
+                        total += matrix[i, j, k];
+                    }
+                }
+            }
 
             int row11 = 1;
 
@@ -1092,6 +1382,7 @@ namespace 产出分布计算
                 }
 
                 int row1 = k * (rows + 4) + 1 + 1;
+
                 for (int j = 0; j < cols; j++)
                 {
                     if (j == 0)
@@ -1127,12 +1418,15 @@ namespace 产出分布计算
                     for (int j = 0; j < cols; j++)
                     {
                         rowstotal += matrix[i, j, k];
-                        worksheet.Cells[row1 + 2 + i, j + 2].Value = (matrix[i, j, k]);
+                        worksheet.Cells[row1 + 2 + i, j + 2].Value = (matrix[i, j, k]) / total;
+                        worksheet.Cells[row1 + 2 + i, j + 2].Style.Numberformat.Format = "0.00%";
                     }
-                    worksheet.Cells[row1 + 2 + i, cols + 2].Value = rowstotal;
+                    worksheet.Cells[row1 + 2 + i, cols + 2].Value = rowstotal / total;
+                    worksheet.Cells[row1 + 2 + i, cols + 2].Style.Numberformat.Format = "0.00%";
+
                 }
                 worksheet.Cells[row1 + 2 + rows, 1].Value = "Sum";
-                CreateExcelWithColorScale(worksheet, row1 + 1, 1, row1 + 2 + rows, cols + 2);
+                CreateExcelWithColorScale(worksheet, row1 + 1, 1, row1 + 1 + rows, cols + 2);
                 double matrixTotal = 0;
                 for (int j = 0; j < cols; j++)
                 {
@@ -1143,10 +1437,11 @@ namespace 产出分布计算
                         colstotal += matrix[i, j, k];
                         matrixTotal += matrix[i, j, k];
                     }
-                    worksheet.Cells[row1 + 2 + rows, j+2].Value = colstotal;
+                    worksheet.Cells[row1 + 2 + rows, j + 2].Value = colstotal / total;
+                    worksheet.Cells[row1 + 2 + rows, j + 2].Style.Numberformat.Format = "0.00%";
                 }
-                worksheet.Cells[row1 + 2 + rows, cols + 2].Value = matrixTotal;
-                total += matrixTotal;
+                worksheet.Cells[row1 + 2 + rows, cols + 2].Value = matrixTotal / total;
+                worksheet.Cells[row1 + 2 + rows, cols + 2].Style.Numberformat.Format = "0.00%";
             }
 
             int nextRows = (depth - 1) * (rows + 4) + 3 + rows + 2 + 1;
@@ -1155,6 +1450,18 @@ namespace 产出分布计算
             {
                 if (k == 0)
                 {
+                    worksheet.Cells[nextRows + k * (rows + 4) , 1].Value = BinName.Text;
+                    worksheet.Cells[nextRows + k * (rows + 4) , 2].Value = "片量";
+                    worksheet.Cells[nextRows + k * (rows + 4) , 3].Value = waferList.Count;
+
+                    worksheet.Cells[nextRows + k * (rows + 4) , 8].Value = "颗粒数分布";
+                    
+                    // 获取单元格范围对象
+                    address = new ExcelAddress(nextRows + k * (rows + 4), 1, nextRows + k * (rows + 4), 8);
+                    range = worksheet.Cells[address.Address];
+                    range.Style.Font.Bold = true;
+                    range.Style.Font.Color.SetColor(System.Drawing.Color.Red);
+
                     worksheet.Cells[nextRows + k * (rows + 4) + 1,  1].Value = ($"{p3} <{pairs[2][0].Item1}");
                     worksheet.Cells[nextRows + k * (rows + 4) + 2, 1].Value = ($"{p1}/{p2}");
                 }
@@ -1205,14 +1512,12 @@ namespace 产出分布计算
                     for (int j = 0; j < cols; j++)
                     {
                         rowstotal += matrix[i, j, k];
-                        worksheet.Cells[nextRows + row1 + 2 + i, j + 2].Value = matrix[i, j, k] / total;
-                        worksheet.Cells[nextRows + row1 + 2 + i, j + 2].Style.Numberformat.Format = "0.00%";
+                        worksheet.Cells[nextRows + row1 + 2 + i, j + 2].Value = matrix[i, j, k];
                     }
-                    worksheet.Cells[nextRows + row1 + 2 + i, cols + 2].Value = rowstotal / total;
-                    worksheet.Cells[nextRows + row1 + 2 + i, cols + 2].Style.Numberformat.Format = "0.00%";
+                    worksheet.Cells[nextRows + row1 + 2 + i, cols + 2].Value = rowstotal;
                 }
                 worksheet.Cells[nextRows + row1 + 2 + rows, 1].Value = "Sum";
-                CreateExcelWithColorScale(worksheet, nextRows + row1 + 1, 1, nextRows + row1 + 2 + rows, cols + 2);
+                CreateExcelWithColorScale(worksheet, nextRows + row1 + 1, 1, nextRows + row1 + 1 + rows, cols + 2);
                 double matrixTotal = 0;
                 for (int j = 0; j < cols; j++)
                 {
@@ -1223,22 +1528,24 @@ namespace 产出分布计算
                         colstotal += matrix[i, j, k];
                         matrixTotal += matrix[i, j, k];
                     }
-                    worksheet.Cells[nextRows + row1 + 2 + rows, j + 2].Value = colstotal / total;
-                    worksheet.Cells[nextRows + row1 + 2 + rows, j + 2].Style.Numberformat.Format = "0.00%";
+                    worksheet.Cells[nextRows + row1 + 2 + rows, j + 2].Value = colstotal;
                 }
-                worksheet.Cells[nextRows + row1 + 2 + rows, cols + 2].Value = matrixTotal / total;
-                worksheet.Cells[nextRows + row1 + 2 + rows, cols + 2].Style.Numberformat.Format = "0.00%";
+                worksheet.Cells[nextRows + row1 + 2 + rows, cols + 2].Value = matrixTotal;
             }
+
             int row2 = nextRows + (depth - 1)*(rows + 4) + 3 + rows;
             int col2 = cols + 2;
 
-            using (ExcelRange range = worksheet.Cells["A1:"+ NumberToExcelColumn(col2) + $"{row2}"])
+            using (ExcelRange range1 = worksheet.Cells["A1:"+ NumberToExcelColumn(col2) + $"{row2}"])
             {
-                range.Style.Font.Name = "微软雅黑";
-                range.Style.Font.Size = 11;
+                range1.Style.Font.Name = "微软雅黑";
+                range1.Style.Font.Size = 11;
             }
 
             worksheet.Cells.AutoFitColumns();
+
+            // 设置不显示网格线
+            worksheet.View.ShowGridLines = false;
 
             if (!string.IsNullOrEmpty(output_excel_file))
             {

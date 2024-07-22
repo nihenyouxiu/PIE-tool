@@ -22,8 +22,8 @@
 
 		<StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" Margin="0,0,80,0" Grid.ColumnSpan="2" >
 			<StackPanel Orientation="Horizontal" Height="30">
-				<Label Content="BIN表命名" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Width="100" Height="30"/>
-				<TextBox x:Name="BinName" Text="BOC1C30D-EOS" Width="100" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Height="20"/>
+				<Label Content="内部型号" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Width="100" Height="30"/>
+				<TextBox x:Name="BinName" Text="BOC1C30D" Width="100" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Height="20"/>
 			</StackPanel>
 			<StackPanel Orientation="Horizontal" Height="30">
 				<Label Content="BinSetting" HorizontalContentAlignment="Center" Width="100"/>

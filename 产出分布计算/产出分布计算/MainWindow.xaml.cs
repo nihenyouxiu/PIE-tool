@@ -43,5 +43,7 @@ namespace 产出分布计算
         {
             FramePage5.Navigate(new Page5());
         }
+
     }
+
 }
