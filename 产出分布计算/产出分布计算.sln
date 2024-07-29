@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34728.123
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "产出分布计算", "产出分布计算\产出分布计算.csproj", "{71AA272B-3B0A-4A61-A020-676825651AA6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{71AA272B-3B0A-4A61-A020-676825651AA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71AA272B-3B0A-4A61-A020-676825651AA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71AA272B-3B0A-4A61-A020-676825651AA6}.Debug|x64.ActiveCfg = Debug|x64
+		{71AA272B-3B0A-4A61-A020-676825651AA6}.Debug|x64.Build.0 = Debug|x64
+		{71AA272B-3B0A-4A61-A020-676825651AA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71AA272B-3B0A-4A61-A020-676825651AA6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71AA272B-3B0A-4A61-A020-676825651AA6}.Release|x64.ActiveCfg = Release|x64
+		{71AA272B-3B0A-4A61-A020-676825651AA6}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {ADD8DEB3-A3C0-4DF7-95D6-E27D325BC1B5}
+	EndGlobalSection
+EndGlobal
