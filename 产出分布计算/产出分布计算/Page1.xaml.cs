@@ -19,7 +19,7 @@ using System.IO.MemoryMappedFiles;
 using System.ComponentModel;
 using System.Windows.Shapes;
 using System.Data;
-using System.Text.Json;
+using Newtonsoft.Json;
 using System.Net;
 
 namespace 产出分布计算
@@ -125,7 +125,9 @@ namespace 产出分布计算
             try
             {
                 string json = File.ReadAllText("config.json");
-                TextBoxContent content = JsonSerializer.Deserialize<TextBoxContent>(json);
+
+                TextBoxContent content = JsonConvert.DeserializeObject<TextBoxContent>(json);
+
                 BinName.Text = content.BinName;
                 BinSetting.Text = content.BinSetting;
                 dimensionTextBox.Text = content.Dimension;
@@ -153,7 +155,6 @@ namespace 产出分布计算
             }
             catch (Exception ex)
             {
-                
             }
         }
 
@@ -164,45 +165,48 @@ namespace 产出分布计算
 
         private void SaveTextBoxContent()
         {
-            TextBoxContent content = new TextBoxContent
+            try
             {
-                BinName = BinName.Text,
-                BinSetting = BinSetting.Text,
-                Dimension = dimensionTextBox.Text,
-                FilePath = filePath.Text,
-                Para1 = para1.Text,
-                Para1Min = para1min.Text,
-                Para1Rta = para1rta.Text,
-                Para1Num = para1num.Text,
-                Fix1num  = fix1num.Text,
-                Para2 = para2.Text,
-                Para2Min = para2min.Text,
-                Para2Rta = para2rta.Text,
-                Para2Num = para2num.Text,
-                Fix2num = fix2num.Text,
+                TextBoxContent content = new TextBoxContent
+                {
+                    BinName = BinName.Text,
+                    BinSetting = BinSetting.Text,
+                    Dimension = dimensionTextBox.Text,
+                    FilePath = filePath.Text,
 
-                Para3 = para3.Text,
-                Para3Min = para3min.Text,
-                Para3Rta = para3rta.Text,
-                Para3Num = para3num.Text,
-                Fix3num = fix3num.Text,
+                    Para1 = para1.Text,
+                    Para1Min = para1min.Text,
+                    Para1Rta = para1rta.Text,
+                    Para1Num = para1num.Text,
+                    Fix1num = fix1num.Text,
 
-                Para4 = para4.Text,
-                Para4Min = para4min.Text,
-                Para4Rta = para4rta.Text,
-                Para4Num = para4num.Text,
-                Fix4num = fix4num.Text,
+                    Para2 = para2.Text,
+                    Para2Min = para2min.Text,
+                    Para2Rta = para2rta.Text,
+                    Para2Num = para2num.Text,
+                    Fix2num = fix2num.Text,
 
-            };
+                    Para3 = para3.Text,
+                    Para3Min = para3min.Text,
+                    Para3Rta = para3rta.Text,
+                    Para3Num = para3num.Text,
+                    Fix3num = fix3num.Text,
 
-            var options = new JsonSerializerOptions
+                    Para4 = para4.Text,
+                    Para4Min = para4min.Text,
+                    Para4Rta = para4rta.Text,
+                    Para4Num = para4num.Text,
+                    Fix4num = fix4num.Text,
+                };
+
+                string json = JsonConvert.SerializeObject(content, Formatting.Indented);
+                File.WriteAllText("config.json", json);
+            }
+            catch (Exception ex)
             {
-                WriteIndented = true
-            };
-
-            string json = JsonSerializer.Serialize(content, options);
-            File.WriteAllText("config.json", json);
+            }
         }
+
 
         public Page1()
         {
@@ -898,14 +902,22 @@ namespace 产出分布计算
             worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
-            worksheet.Cells[1, 1].Value = BinName.Text;
-            worksheet.Cells[1, 2].Value = "total";
-            worksheet.Cells[1, 3].Value = waferList.Count;
-
             int row1 = 1;
-            double rowstotal = 0;
-            worksheet.Cells[1 + row1, 1].Value = ($"{p1}");
+            worksheet.Cells[row1, 1].Value = BinName.Text;
+            worksheet.Cells[row1, 2].Value = "片量";
+            worksheet.Cells[row1, 3].Value = waferList.Count;
+            worksheet.Cells[row1 + 1, 2].Value = "总计百分比";
             
+            double rowstotal = 0;
+            double total = 0;
+            worksheet.Cells[1 + row1, 1].Value = ($"{p1}");
+
+            for (int i = 0; i < rows; i++)
+            {
+                rowstotal += matrix[i];
+            }
+            total = rowstotal;
+
             for (int i = 0; i < rows; i++)
             {
 
@@ -922,11 +934,40 @@ namespace 产出分布计算
                     worksheet.Cells[row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1].Item1}-{pairs[0][i - 1].Item2}");
                 }
 
-                rowstotal += matrix[i];
-                worksheet.Cells[row1 + 2 + i, 2].Value = (matrix[i]);
+                worksheet.Cells[row1 + 2 + i, 2].Value = (matrix[i]) / total;
+                worksheet.Cells[row1 + 2 + i, 2].Style.Numberformat.Format = "0.00%";
             }
             worksheet.Cells[row1 + 2 + rows, 1].Value = "Sum";
-            worksheet.Cells[row1 + 2 + rows, 2].Value = rowstotal;
+            worksheet.Cells[row1 + 2 + rows, 2].Value = rowstotal / total;
+            worksheet.Cells[row1 + 2 + rows, 2].Style.Numberformat.Format = "0.00%";
+            row1 = row1 + 2 + rows + 2;
+            worksheet.Cells[row1, 1].Value = BinName.Text;
+            worksheet.Cells[row1, 2].Value = "片量";
+            worksheet.Cells[row1, 3].Value = waferList.Count;
+            worksheet.Cells[row1 +1 , 2].Value = "颗粒数";
+
+            worksheet.Cells[1 + row1, 1].Value = ($"{p1}");
+
+            for (int i = 0; i < rows; i++)
+            {
+
+                if (i == 0)
+                {
+                    worksheet.Cells[row1 + 2 + i, 1].Value = ($"<{pairs[0][0].Item1}");
+                }
+                else if (i == rows - 1)
+                {
+                    worksheet.Cells[row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2].Item2}");
+                }
+                else
+                {
+                    worksheet.Cells[row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1].Item1}-{pairs[0][i - 1].Item2}");
+                }
+
+                worksheet.Cells[row1 + 2 + i, 2].Value = (matrix[i]) ;
+            }
+            worksheet.Cells[row1 + 2 + rows, 1].Value = "Sum";
+            worksheet.Cells[row1 + 2 + rows, 2].Value = rowstotal ;
 
             int row2 = row1 + 2 + rows;
             int col2 = 2;
