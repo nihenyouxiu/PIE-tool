@@ -21,6 +21,8 @@ using System.Windows.Shapes;
 using System.Data;
 using Newtonsoft.Json;
 using System.Net;
+using System.Text.Json;
+using System.Diagnostics;
 
 namespace 产出分布计算
 {
@@ -45,6 +47,7 @@ namespace 产出分布计算
             public string BinSetting { get; set; }
             public string Dimension { get; set; }
             public string FilePath { get; set; }
+            public string filenameSuffix { get; set; }
             public string Para1 { get; set; }
             public string Para1Min { get; set; }
             public string Para1Rta { get; set; }
@@ -132,6 +135,7 @@ namespace 产出分布计算
                 BinSetting.Text = content.BinSetting;
                 dimensionTextBox.Text = content.Dimension;
                 filePath.Text = content.FilePath;
+                filenameSuffix.Text = content.filenameSuffix;
                 para1.Text = content.Para1;
                 para1min.Text = content.Para1Min;
                 para1rta.Text = content.Para1Rta;
@@ -173,6 +177,7 @@ namespace 产出分布计算
                     BinSetting = BinSetting.Text,
                     Dimension = dimensionTextBox.Text,
                     FilePath = filePath.Text,
+                    filenameSuffix = filenameSuffix.Text,
 
                     Para1 = para1.Text,
                     Para1Min = para1min.Text,
@@ -223,7 +228,7 @@ namespace 产出分布计算
             SaveTextBoxContent();
         }
 
-        void WriteMatrix(List<(double, double)>[] pairs, int dim, string output_excel_file)
+        void WriteMatrix(List<double[]>[] pairs, int dim, string output_excel_file)
         {
 
             // 处理一维数据
@@ -349,7 +354,7 @@ namespace 产出分布计算
             }
         }
 
-        private async void ProcessFile(Wafer wafer, int dim, List<(double, double)>[] pairs, double[] fixNums, string[] ops)
+        private async void ProcessFile(Wafer wafer, int dim, List<double[]>[] pairs, double[] fixNums, string[] ops)
         {
             if (waferList.Any())
             {
@@ -447,7 +452,7 @@ namespace 产出分布计算
                 Directory.CreateDirectory(outputFolder);
             }
 
-            string output_csv_file = System.IO.Path.Combine(outputFolder, "output.csv");
+            string output_csv_file = System.IO.Path.Combine(outputFolder, "每片颗粒数.csv");
             string not_find_csv_file = System.IO.Path.Combine(outputFolder, "NotFindFile.csv");
             try
             {
@@ -495,6 +500,7 @@ namespace 产出分布计算
                 Progress = 0;
                 progressBar.Value = 0;
                 int processedLines = 0;
+                string fileSuffix = this.filenameSuffix.Text;
 
                 // 尝试打开文件，如果文件已经被打开会引发 IOException 异常
                 using (StreamReader sr = new StreamReader(openFileDialog.FileName))
@@ -502,7 +508,7 @@ namespace 产出分布计算
                     string line;
                     while ((line = sr.ReadLine()) != null)
                     {
-                        string filePathTemp = System.IO.Path.Combine(filePathText, line + ".csv");
+                        string filePathTemp = System.IO.Path.Combine(filePathText, line + fileSuffix + ".csv");
                         tasks.Add(Task.Run(() =>
                         {
                             importWaferFiles(filePathTemp, dim, col2, output_csv_file);
@@ -598,6 +604,47 @@ namespace 产出分布计算
                 }
             }
         }
+
+        public void ExportToCustomJson(Dictionary<string, List<double[]>> pairsDict, string filePath)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("{");
+
+            foreach (var pair in pairsDict)
+            {
+                sb.AppendLine($"  \"{pair.Key}\": [");
+
+                for (int i = 0; i < pair.Value.Count; i++)
+                {
+                    var pairArray = pair.Value[i];
+                    sb.Append("    [");
+                    sb.Append(string.Join(", ", pairArray));
+                    sb.Append("]");
+
+                    if (i < pair.Value.Count - 1)
+                    {
+                        sb.AppendLine(",");
+                    }
+                    else
+                    {
+                        sb.AppendLine();
+                    }
+                }
+
+                sb.AppendLine("  ],");
+            }
+
+            // Remove the trailing comma and newline
+            if (sb.Length > 2)
+            {
+                sb.Length -= 3;
+            }
+
+            sb.AppendLine("}");
+
+            File.WriteAllText(filePath, sb.ToString());
+        }
+
         private async void runButton_Click(object sender, RoutedEventArgs e)
         {
             DisableAllButtons();
@@ -636,6 +683,7 @@ namespace 产出分布计算
             double[] fixNums = new double[dimension];
             int[] counts = new int[dimension];
             int[] col = new int[dimension];
+            string[] paraStrings = new string[dimension];
             string[] ops = new string[dimension];
             string output_excel_file = "";
             // 处理并输出结果
@@ -645,6 +693,7 @@ namespace 产出分布计算
             if (dimension >= 1)
             {
                 if (dict.ContainsKey(this.para1.Text.ToUpper())) col[0] = dict[this.para1.Text.ToUpper()];
+                paraStrings[0] = this.para1.Text.ToUpper();
                 minValues[0] = double.Parse(this.para1min.Text);
                 stepSizes[0] = double.Parse(this.para1rta.Text);
                 counts[0] = int.Parse(this.para1num.Text);
@@ -655,7 +704,9 @@ namespace 产出分布计算
 
             if (dimension >= 2)
             {
-                if (dict.ContainsKey(this.para2.Text.ToUpper())) col[1] = dict[this.para2.Text.ToUpper()]; 
+                if (dict.ContainsKey(this.para2.Text.ToUpper())) col[1] = dict[this.para2.Text.ToUpper()];
+                paraStrings[1] = this.para2.Text.ToUpper();
+
                 minValues[1] = double.Parse(this.para2min.Text);
                 stepSizes[1] = double.Parse(this.para2rta.Text);
                 counts[1] = int.Parse(this.para2num.Text);
@@ -668,6 +719,7 @@ namespace 产出分布计算
             if (dimension >= 3)
             {
                 if (dict.ContainsKey(this.para3.Text.ToUpper())) col[2] = dict[this.para3.Text.ToUpper()];
+                paraStrings[2] = this.para3.Text.ToUpper();
                 minValues[2] = double.Parse(this.para3min.Text);
                 stepSizes[2] = double.Parse(this.para3rta.Text);
                 counts[2] = int.Parse(this.para3num.Text);
@@ -682,6 +734,7 @@ namespace 产出分布计算
                 MessageBox.Show("4维数据产出分布未开发！");
                 return;
                 if (dict.ContainsKey(this.para4.Text.ToUpper())) col[3] = dict[this.para4.Text.ToUpper()];
+                paraStrings[3] = this.para4.Text.ToUpper();
                 minValues[3] = double.Parse(this.para4min.Text);
                 stepSizes[3] = double.Parse(this.para4rta.Text);
                 counts[3] = int.Parse(this.para4num.Text);
@@ -691,17 +744,17 @@ namespace 产出分布计算
             }
 
             // 存储生成的pair数组
-            List<(double, double)>[] pairs = new List<(double, double)>[dimension];
+            List<double[]>[] pairs = new List<double[]>[dimension];
 
             // 生成pair数组
             for (int i = 0; i < dimension; i++)
             {
-                pairs[i] = new List<(double, double)>();
+                pairs[i] = new List<double[]>();
                 for (int j = 0; j < counts[i]; j++)
                 {
                     double first = Math.Round(minValues[i] + j * stepSizes[i],3);
                     double second = Math.Round(first + stepSizes[i], 3);
-                    pairs[i].Add((first, second));
+                    pairs[i].Add(new double[] { first, second });
                 }
             }
 
@@ -710,6 +763,7 @@ namespace 产出分布计算
                 int length = pairs[0].Count;
                 matrix1D = new int[length + 2];
             }
+
             else if (dimension == 2)
             {
                 int rows = pairs[0].Count;
@@ -812,7 +866,232 @@ namespace 产出分布计算
             }
             EnableAllButtons();
         }
-        void Generate1DMatrix(List<Chip> chips, List<(double, double)>[] pairs, double[]fixNums,string[] ops)
+
+        private async void runButton_Click_New(object sender, RoutedEventArgs e)
+        {
+            DisableAllButtons();
+            Progress = 0;
+
+            string filePath = BinName.Text;
+
+            if (!int.TryParse(dimensionTextBox.Text, out int dim))
+            {
+                System.Windows.MessageBox.Show("Invalid dimension value. Please enter a valid integer.");
+                return;
+            }
+
+            string outputFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OutputFolder");
+            string JsonfilePath = System.IO.Path.Combine(outputFolder, "pairsConfig.json"); ;
+
+            // 定义字典
+            Dictionary<string, int> dict = new Dictionary<string, int>
+            {
+                {"VF1", 4}, {"VF2", 6}, {"VF3", 8}, {"VF4", 10}, {"VZ1", 12},
+                {"IR", 14}, {"HW1", 16}, {"LOP1", 18}, {"WLP1", 20}, {"WLD1", 22},
+                {"IR1", 24}, {"VFD", 26}, {"DVF", 28}, {"IR2", 30}, {"WLC1", 32},
+                {"VF5", 34}, {"VF6", 36}, {"VF7", 38}, {"VF8", 40}, {"DVF1", 42},
+                {"DVF2", 44}, {"VZ2", 46}, {"VZ3", 48}, {"VZ4", 50}, {"VZ5", 52},
+                {"IR3", 54}, {"IR4", 56}, {"IR5", 58}, {"IR6", 60}, {"IF", 62},
+                {"IF1", 64}, {"IF2", 66}, {"LOP2", 68}, {"WLP2", 70}, {"WLD2", 72},
+                {"HW2", 74}, {"WLC2", 76}
+            };
+
+            // 读取 JSON 文件内容
+            string jsonContent = File.ReadAllText(JsonfilePath);
+
+            // 解析 JSON 为字典
+            var pairsDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, List<double[]>>>(jsonContent);
+
+
+            int dimension = dim;
+
+            if (dimension < 1 || dimension > 4)
+            {
+                throw new ArgumentException("Dimension must be between 1 and 4.");
+            }
+
+            if(pairsDict.Count != dimension)
+            {
+                throw new ArgumentException("Json Dimension is not right!");
+            }
+
+
+            double[] fixNums = new double[dimension];
+            int[] col = new int[dimension];
+            string[] paraStrings = new string[dimension];
+            string[] ops = new string[dimension];
+            string output_excel_file = "";
+            // 处理并输出结果
+            string fileExtension = ".xlsx";
+
+
+            if (dimension >= 1)
+            {
+                if (dict.ContainsKey(this.para1.Text.ToUpper())) col[0] = dict[this.para1.Text.ToUpper()];
+                paraStrings[0] = this.para1.Text.ToUpper();
+                fixNums[0] = Math.Round(double.Parse(this.fix1num.Text), 6);
+                ops[0] = oprBox1.Text;
+                output_excel_file = System.IO.Path.Combine(outputFolder, $"{filePath}_{para1.Text}");
+            }
+
+            if (dimension >= 2)
+            {
+                if (dict.ContainsKey(this.para2.Text.ToUpper())) col[1] = dict[this.para2.Text.ToUpper()];
+                paraStrings[1] = this.para2.Text.ToUpper();
+                fixNums[1] = Math.Round(double.Parse(this.fix2num.Text), 6);
+                ops[1] = oprBox2.Text;
+                output_excel_file = System.IO.Path.Combine(outputFolder, $"{filePath}_{para1.Text}_{para2.Text}");
+
+            }
+
+            if (dimension >= 3)
+            {
+                if (dict.ContainsKey(this.para3.Text.ToUpper())) col[2] = dict[this.para3.Text.ToUpper()];
+                paraStrings[2] = this.para3.Text.ToUpper();
+                fixNums[2] = Math.Round(double.Parse(this.fix3num.Text), 6);
+                ops[2] = oprBox3.Text;
+                output_excel_file = System.IO.Path.Combine(outputFolder, $"{filePath}_{para1.Text}_{para2.Text}_{para3.Text}");
+
+            }
+
+            if (dimension >= 4)
+            {
+                MessageBox.Show("4维数据产出分布未开发！");
+                return;
+                if (dict.ContainsKey(this.para4.Text.ToUpper())) col[3] = dict[this.para4.Text.ToUpper()];
+                paraStrings[3] = this.para4.Text.ToUpper();
+                fixNums[3] = Math.Round(double.Parse(this.fix4num.Text), 6);
+                ops[3] = oprBox4.Text;
+                output_excel_file = System.IO.Path.Combine(outputFolder, $"{filePath}_{para1.Text}_{para2.Text}_{para3.Text}_{para4.Text}");
+            }
+
+            // 存储生成的pair数组
+            List<double[]>[] pairs = new List<double[]>[dimension];
+            int i = 0;
+            foreach (var pair in pairsDict)
+            {
+                pairs[i] = new List<double[]>();
+                if(pair.Key != paraStrings[i])
+                {
+                    throw new ArgumentException("Json Para is not correct!");
+                }
+
+                foreach (var subArray in pair.Value)
+                {
+                    pairs[i].Add(subArray);
+                }
+                i++;
+            }
+
+            if (dimension == 1)
+            {
+                int length = pairs[0].Count;
+                matrix1D = new int[length + 2];
+            }
+
+            else if (dimension == 2)
+            {
+                int rows = pairs[0].Count;
+                int cols = pairs[1].Count;
+                matrix2D = new int[rows + 2, cols + 2];
+            }
+            else if (dimension == 3)
+            {
+                int rows = pairs[0].Count;
+                int cols = pairs[1].Count;
+                int depth = pairs[2].Count;
+                matrix3D = new int[rows + 2, cols + 2, depth + 2];
+            }
+            else if (dimension == 4)
+            {
+                int rows = pairs[0].Count;
+                int cols = pairs[1].Count;
+                int depth = pairs[2].Count;
+                int time = pairs[3].Count;
+                matrix4D = new int[rows + 2, cols + 2, depth + 2, time + 2];
+            }
+
+
+            // 检查文件是否存在并生成唯一文件名
+            int counter = 1;
+            while (File.Exists(output_excel_file + fileExtension))
+            {
+                string newFileName = $"{output_excel_file}_{counter}";
+                output_excel_file = System.IO.Path.Combine(outputFolder, newFileName);
+                counter++;
+            }
+
+            // 检查文件夹是否存在
+            if (!Directory.Exists(outputFolder))
+            {
+                Directory.CreateDirectory(outputFolder);
+            }
+
+            DateTime startTime = DateTime.Now; // 记录开始时间
+
+            Progress = 0;
+
+            progressBar.Value = 0;
+
+            int processedLines = 0;
+
+            int totalWafers = waferList.Count;
+
+            // 创建文件夹
+            List<Task> tasks = new List<Task>(); // 声明 tasks 列表
+            output_excel_file = output_excel_file + fileExtension;
+            foreach (var wafer in waferList)
+            {
+                tasks.Add(Task.Run(() =>
+                {
+
+                    ProcessFile(wafer.Value, dimension, pairs, fixNums, ops);
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        processedLines++;
+                        Progress = processedLines * 100 / totalWafers;
+                        progressBar.Value = Progress;
+                        progressText.Text = $"{Progress}%";
+                    });
+
+                }));
+            }
+            // 等待所有任务完成
+            await Task.WhenAll(tasks);
+
+            // 写入处理后的数据到 Excel 文件
+            WriteMatrix(pairs, dim, output_excel_file);
+
+            if (!breakFlag)
+            {
+                DateTime endTime = DateTime.Now; // 记录结束时间
+                TimeSpan totalTime = endTime - startTime; // 计算运行时间
+                                                          // 弹出消息框询问是否打开文件
+                MessageBoxResult result = MessageBox.Show("Excel 文件已导出到 " + output_excel_file + $", 总共耗时：{totalTime.TotalSeconds} 秒 , \n是否打开该文件？", "导出成功", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                // 根据用户的选择执行相应的操作
+                if (result == MessageBoxResult.Yes)
+                {
+                    // 打开文件
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo { FileName = output_excel_file, UseShellExecute = true });
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("打开文件失败：" + ex.Message, "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                else
+                {
+                    // 处理文件名为空的情况
+                    MessageBox.Show("Excel 文件: " + output_excel_file + "导出出错！");
+                }
+            }
+            EnableAllButtons();
+        }
+        void Generate1DMatrix(List<Chip> chips, List<double[]>[] pairs, double[]fixNums,string[] ops)
         {
             // 执行计算或处理任务
             foreach (var chip in chips)
@@ -826,7 +1105,7 @@ namespace 产出分布计算
             }
         }
 
-        void Generate2DMatrix(List<Chip> chips, List<(double, double)>[] pairs, double[] fixNums, string[] ops)
+        void Generate2DMatrix(List<Chip> chips, List<double[]>[] pairs, double[] fixNums, string[] ops)
         {
             foreach(var chip in chips)
             {
@@ -841,7 +1120,7 @@ namespace 产出分布计算
 
         }
 
-        void Generate3DMatrix(List<Chip> chips, List<(double, double)>[] pairs, double[] fixNums, string[] ops)
+        void Generate3DMatrix(List<Chip> chips, List<double[]>[] pairs, double[] fixNums, string[] ops)
         {
             // 执行计算或处理任务
             foreach (var chip in chips)
@@ -857,7 +1136,7 @@ namespace 产出分布计算
             }
         }
 
-        void Generate4DMatrix(List<Chip> chips, List<(double, double)>[] pairs, double[] fixNums, string[] ops)
+        void Generate4DMatrix(List<Chip> chips, List<double[]>[] pairs, double[] fixNums, string[] ops)
         {            // 执行计算或处理任务
             foreach (var chip in chips)
             {
@@ -872,24 +1151,24 @@ namespace 产出分布计算
                 }
             }
         }
-        int GetRangeIndex(double value, List<(double, double)> pairs)
+        int GetRangeIndex(double value, List<double[]> pairs)
         {
             for (int i = 0; i < pairs.Count; i++)
             {
-                if (value >= pairs[i].Item1 && value < pairs[i].Item2)
+                if (value >= pairs[i][0] && value < pairs[i][1])
                 {
                     return i + 1;
-                }else if(value < pairs[0].Item1)
+                }else if(value < pairs[i][0])
                 {
                     return 0;
-                }else if(value >= pairs[pairs.Count - 1].Item2)
+                }else if(value >= pairs[pairs.Count - 1][1])
                 {
                     return pairs.Count+1;
                 }
             }
             return -1;  // 不在任何范围内
         }
-        void PrintAndWrite1DMatrix(int[] matrix, List<(double, double)>[] pairs, string output_excel_file)
+        void PrintAndWrite1DMatrix(int[] matrix, List<double[]>[] pairs, string output_excel_file)
         {
             string p1 = this.para1.Text.ToUpper();
 
@@ -923,15 +1202,15 @@ namespace 产出分布计算
 
                 if (i == 0)
                 {
-                    worksheet.Cells[row1 + 2 + i, 1].Value = ($"<{pairs[0][0].Item1}");
+                    worksheet.Cells[row1 + 2 + i, 1].Value = ($"<{pairs[0][0][0]}");
                 }
                 else if (i == rows - 1)
                 {
-                    worksheet.Cells[row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2].Item2}");
+                    worksheet.Cells[row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2][1]}");
                 }
                 else
                 {
-                    worksheet.Cells[row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1].Item1}-{pairs[0][i - 1].Item2}");
+                    worksheet.Cells[row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1][0]}-{pairs[0][i - 1][1]}");
                 }
 
                 worksheet.Cells[row1 + 2 + i, 2].Value = (matrix[i]) / total;
@@ -953,15 +1232,15 @@ namespace 产出分布计算
 
                 if (i == 0)
                 {
-                    worksheet.Cells[row1 + 2 + i, 1].Value = ($"<{pairs[0][0].Item1}");
+                    worksheet.Cells[row1 + 2 + i, 1].Value = ($"<{pairs[0][0][0]}");
                 }
                 else if (i == rows - 1)
                 {
-                    worksheet.Cells[row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2].Item2}");
+                    worksheet.Cells[row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2][1]}");
                 }
                 else
                 {
-                    worksheet.Cells[row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1].Item1}-{pairs[0][i - 1].Item2}");
+                    worksheet.Cells[row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1][0]}-{pairs[0][i - 1][1]}");
                 }
 
                 worksheet.Cells[row1 + 2 + i, 2].Value = (matrix[i]) ;
@@ -1042,7 +1321,7 @@ namespace 产出分布计算
             range.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
         }
 
-        void PrintAndWrite2DMatrix(int[,] matrix, List<(double, double)>[] pairs, string output_excel_file)
+        void PrintAndWrite2DMatrix(int[,] matrix, List<double[]>[] pairs, string output_excel_file)
         {
             string p1 = this.para1.Text.ToUpper();
             string p2 = this.para2.Text.ToUpper();
@@ -1092,15 +1371,15 @@ namespace 产出分布计算
             {
                 if (j == 0)
                 {
-                    worksheet.Cells[row1 + 1, j + 2].Value = ($"<{pairs[1][0].Item1}");
+                    worksheet.Cells[row1 + 1, j + 2].Value = ($"<{pairs[1][0][0]}");
                 }
                 else if (j == cols - 1)
                 {
-                    worksheet.Cells[row1 + 1, j + 2].Value = ($">{pairs[1][j -2].Item2}");
+                    worksheet.Cells[row1 + 1, j + 2].Value = ($">{pairs[1][j -2][1]}");
                 }
                 else
                 {
-                    worksheet.Cells[row1 + 1, j + 2].Value = ($"{pairs[1][j - 1].Item1}-{pairs[1][j - 1].Item2}");
+                    worksheet.Cells[row1 + 1, j + 2].Value = ($"{pairs[1][j - 1][0]}-{pairs[1][j - 1][1]}");
                 }
             }
             worksheet.Cells[row1 + 1, cols + 2].Value = "Sum";
@@ -1110,15 +1389,15 @@ namespace 产出分布计算
 
                 if (i == 0)
                 {
-                    worksheet.Cells[row1 + 2 + i, 1].Value = ($"<{pairs[0][0].Item1}");
+                    worksheet.Cells[row1 + 2 + i, 1].Value = ($"<{pairs[0][0][0]}");
                 }
                 else if (i == rows - 1)
                 {
-                    worksheet.Cells[row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2].Item2}");
+                    worksheet.Cells[row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2][1]}");
                 }
                 else
                 {
-                    worksheet.Cells[row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1].Item1}-{pairs[0][i - 1].Item2}");
+                    worksheet.Cells[row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1][0]}-{pairs[0][i - 1][1]}");
                 }
                 for (int j = 0; j < cols; j++)
                 {
@@ -1173,15 +1452,15 @@ namespace 产出分布计算
             {
                 if (j == 0)
                 {
-                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($"<{pairs[1][0].Item1}");
+                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($"<{pairs[1][0][0]}");
                 }
                 else if (j == cols - 1)
                 {
-                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($">{pairs[1][j - 2].Item2}");
+                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($">{pairs[1][j - 2][1]}");
                 }
                 else
                 {
-                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($"{pairs[1][j - 1].Item1}-{pairs[1][j - 1].Item2}");
+                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($"{pairs[1][j - 1][0]}-{pairs[1][j - 1][1]}");
                 }
             }
             worksheet.Cells[row1 + 1 + 1, cols + 2].Value = "Sum";
@@ -1191,15 +1470,15 @@ namespace 产出分布计算
 
                 if (i == 0)
                 {
-                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($"<{pairs[0][0].Item1}");
+                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($"<{pairs[0][0][0]}");
                 }
                 else if (i == rows - 1)
                 {
-                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($">{pairs[0][i - 2].Item2}");
+                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($">{pairs[0][i - 2][1]}");
                 }
                 else
                 {
-                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($"{pairs[0][i - 1].Item1}-{pairs[0][i - 1].Item2}");
+                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($"{pairs[0][i - 1][0]}-{pairs[0][i - 1][1]}");
                 }
                 for (int j = 0; j < cols; j++)
                 {
@@ -1253,15 +1532,15 @@ namespace 产出分布计算
             {
                 if (j == 0)
                 {
-                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($"<{pairs[1][0].Item1}");
+                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($"<{pairs[1][0][0]}");
                 }
                 else if (j == cols - 1)
                 {
-                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($">{pairs[1][j - 2].Item2}");
+                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($">{pairs[1][j - 2][1]}");
                 }
                 else
                 {
-                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($"{pairs[1][j - 1].Item1}-{pairs[1][j - 1].Item2}");
+                    worksheet.Cells[row1 + 1 + 1, j + 2].Value = ($"{pairs[1][j - 1][0]}-{pairs[1][j - 1][1]}");
                 }
             }
             worksheet.Cells[row1 + 1 + 1, cols + 2].Value = "Sum";
@@ -1271,15 +1550,15 @@ namespace 产出分布计算
 
                 if (i == 0)
                 {
-                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($"<{pairs[0][0].Item1}");
+                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($"<{pairs[0][0][0]}");
                 }
                 else if (i == rows - 1)
                 {
-                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($">{pairs[0][i - 2].Item2}");
+                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($">{pairs[0][i - 2][1]}");
                 }
                 else
                 {
-                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($"{pairs[0][i - 1].Item1}-{pairs[0][i - 1].Item2}");
+                    worksheet.Cells[row1 + 1 + 2 + i, 1].Value = ($"{pairs[0][i - 1][0]}-{pairs[0][i - 1][1]}");
                 }
                 for (int j = 0; j < cols; j++)
                 {
@@ -1359,7 +1638,7 @@ namespace 产出分布计算
             return columnName;
         }
 
-        void PrintAndWrite3DMatrix(int[,,] matrix, List<(double, double)>[] pairs, string output_excel_file)
+        void PrintAndWrite3DMatrix(int[,,] matrix, List<double[]>[] pairs, string output_excel_file)
         {
             string p1 = this.para1.Text.ToUpper();
             string p2 = this.para2.Text.ToUpper();
@@ -1408,17 +1687,17 @@ namespace 产出分布计算
                 
                 if (k == 0)
                 {
-                    worksheet.Cells[k * (rows +4) + 1 + row11, 1].Value = ($"{p3} <{pairs[2][0].Item1}");
+                    worksheet.Cells[k * (rows +4) + 1 + row11, 1].Value = ($"{p3} <{pairs[2][0][0]}");
                     worksheet.Cells[k * (rows +4) + 2 + row11, 1].Value = ($"{p1}/{p2}");
                 }
                 else if (k == depth - 1)
                 {
-                    worksheet.Cells[k * (rows +4) + 1 + row11, 1].Value = ($"{p3} >{pairs[2][k-2].Item2}");
+                    worksheet.Cells[k * (rows +4) + 1 + row11, 1].Value = ($"{p3} >{pairs[2][k-2][1]}");
                     worksheet.Cells[k * (rows +4) + 2 + row11, 1].Value = ($"{p1}/{p2}");
                 }
                 else
                 {
-                    worksheet.Cells[k * (rows +4) + 1 + row11, 1].Value = ($"{p3} {pairs[2][k - 1].Item1}-{pairs[2][k - 1].Item2}");
+                    worksheet.Cells[k * (rows +4) + 1 + row11, 1].Value = ($"{p3} {pairs[2][k - 1][0]}-{pairs[2][k - 1][1]}");
                     worksheet.Cells[k * (rows +4) + 2 + row11, 1].Value = ($"{p1}/{p2}");
                 }
 
@@ -1428,15 +1707,15 @@ namespace 产出分布计算
                 {
                     if (j == 0)
                     {
-                        worksheet.Cells[row1 + 1, j + 2].Value = ($"<{pairs[1][0].Item1}");
+                        worksheet.Cells[row1 + 1, j + 2].Value = ($"<{pairs[1][0][0]}");
                     }
                     else if (j == cols - 1)
                     {
-                        worksheet.Cells[row1 + 1, j + 2].Value = ($">{pairs[1][j - 2].Item2}");
+                        worksheet.Cells[row1 + 1, j + 2].Value = ($">{pairs[1][j - 2][1]}");
                     }
                     else
                     {
-                        worksheet.Cells[row1 + 1, j + 2].Value = ($"{pairs[1][j - 1].Item1}-{pairs[1][j - 1].Item2}");
+                        worksheet.Cells[row1 + 1, j + 2].Value = ($"{pairs[1][j - 1][0]}-{pairs[1][j - 1][1]}");
                     }
                 }
                 worksheet.Cells[row1 + 1, cols + 2].Value = "Sum";
@@ -1446,15 +1725,15 @@ namespace 产出分布计算
 
                     if (i == 0)
                     {
-                        worksheet.Cells[row1 + 2 + i, 1].Value = ($"<{pairs[0][0].Item1}");
+                        worksheet.Cells[row1 + 2 + i, 1].Value = ($"<{pairs[0][0][0]}");
                     }
                     else if (i == rows - 1)
                     {
-                        worksheet.Cells[row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2].Item2}");
+                        worksheet.Cells[row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2][1]}");
                     }
                     else
                     {
-                        worksheet.Cells[row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1].Item1}-{pairs[0][i - 1].Item2}");
+                        worksheet.Cells[row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1][0]}-{pairs[0][i - 1][1]}");
                     }
                     for (int j = 0; j < cols; j++)
                     {
@@ -1503,17 +1782,17 @@ namespace 产出分布计算
                     range.Style.Font.Bold = true;
                     range.Style.Font.Color.SetColor(System.Drawing.Color.Red);
 
-                    worksheet.Cells[nextRows + k * (rows + 4) + 1,  1].Value = ($"{p3} <{pairs[2][0].Item1}");
+                    worksheet.Cells[nextRows + k * (rows + 4) + 1,  1].Value = ($"{p3} <{pairs[2][0][0]}");
                     worksheet.Cells[nextRows + k * (rows + 4) + 2, 1].Value = ($"{p1}/{p2}");
                 }
                 else if (k == depth - 1)
                 {
-                    worksheet.Cells[nextRows + k * (rows + 4) + 1, 1].Value = ($"{p3} >{pairs[2][k - 2].Item2}");
+                    worksheet.Cells[nextRows + k * (rows + 4) + 1, 1].Value = ($"{p3} >{pairs[2][k - 2][1]}");
                     worksheet.Cells[nextRows + k * (rows + 4) + 2, 1].Value = ($"{p1}/{p2}");
                 }
                 else
                 {
-                    worksheet.Cells[nextRows + k * (rows + 4) + 1, 1].Value = ($"{p3} {pairs[2][k - 1].Item1}-{pairs[2][k - 1].Item2}");
+                    worksheet.Cells[nextRows + k * (rows + 4) + 1, 1].Value = ($"{p3} {pairs[2][k - 1][0]}-{pairs[2][k - 1][1]}");
                     worksheet.Cells[nextRows + k * (rows + 4) + 2, 1].Value = ($"{p1}/{p2}");
                 }
 
@@ -1522,15 +1801,15 @@ namespace 产出分布计算
                 {
                     if (j == 0)
                     {
-                        worksheet.Cells[nextRows + row1 + 1, j + 2].Value = ($"<{pairs[1][0].Item1}");
+                        worksheet.Cells[nextRows + row1 + 1, j + 2].Value = ($"<{pairs[1][0][0]}");
                     }
                     else if (j == cols - 1)
                     {
-                        worksheet.Cells[nextRows + row1 + 1, j + 2].Value = ($">{pairs[1][j - 2].Item2}");
+                        worksheet.Cells[nextRows + row1 + 1, j + 2].Value = ($">{pairs[1][j - 2][1]}");
                     }
                     else
                     {
-                        worksheet.Cells[nextRows + row1 + 1, j + 2].Value = ($"{pairs[1][j - 1].Item1}-{pairs[1][j - 1].Item2}");
+                        worksheet.Cells[nextRows + row1 + 1, j + 2].Value = ($"{pairs[1][j - 1][0]}-{pairs[1][j - 1][1]}");
                     }
                 }
                 worksheet.Cells[nextRows + row1 + 1, cols + 2].Value = "Sum";
@@ -1540,15 +1819,15 @@ namespace 产出分布计算
 
                     if (i == 0)
                     {
-                        worksheet.Cells[nextRows + row1 + 2 + i, 1].Value = ($"<{pairs[0][0].Item1}");
+                        worksheet.Cells[nextRows + row1 + 2 + i, 1].Value = ($"<{pairs[0][0][0]}");
                     }
                     else if (i == rows - 1)
                     {
-                        worksheet.Cells[nextRows + row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2].Item2}");
+                        worksheet.Cells[nextRows + row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2][1]}");
                     }
                     else
                     {
-                        worksheet.Cells[nextRows + row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1].Item1}-{pairs[0][i - 1].Item2}");
+                        worksheet.Cells[nextRows + row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1][0]}-{pairs[0][i - 1][1]}");
                     }
                     for (int j = 0; j < cols; j++)
                     {
@@ -1611,7 +1890,7 @@ namespace 产出分布计算
             }
         }
 
-        void PrintAndWrite4DMatrix(int[,,,] matrix, List<(double, double)>[] pairs, string output_excel_file)
+        void PrintAndWrite4DMatrix(int[,,,] matrix, List<double[]>[] pairs, string output_excel_file)
         {
 
             //int rows = matrix.GetLength(0);
@@ -1639,33 +1918,33 @@ namespace 产出分布计算
             //{
             //    if (t == 0)
             //    {
-            //        worksheet.Cells[t * (rows + 4) + 1, 1].Value = ($"{p4} <{pairs[3][0].Item1},");
-            //        worksheet.Cells[t * (rows + 4) + 2, 1].Value = ($"{p3} <{pairs[2][0].Item1}");
+            //        worksheet.Cells[t * (rows + 4) + 1, 1].Value = ($"{p4} <{pairs[3][0][0]},");
+            //        worksheet.Cells[t * (rows + 4) + 2, 1].Value = ($"{p3} <{pairs[2][0][0]}");
             //        worksheet.Cells[t * (rows + 4) + 3, 1].Value = ($"{p1}/{p2}");
             //    }
             //    else if (t == time - 1)
             //    {
-            //        writer.WriteLine($"{p4} >{pairs[3][t - 2].Item2},");
+            //        writer.WriteLine($"{p4} >{pairs[3][t - 2][1]},");
             //    }
             //    else
             //    {
-            //        writer.WriteLine($"{p4} {pairs[3][t - 1].Item1}-{pairs[3][t - 1].Item2},");
+            //        writer.WriteLine($"{p4} {pairs[3][t - 1][0]}-{pairs[3][t - 1][1]},");
             //    }
             //    for (int k = 0; k < depth; k++)
             //    {
             //        if (k == 0)
             //        {
-            //            worksheet.Cells[k * (rows + 4) + 1, 1].Value = ($"{p3} <{pairs[2][0].Item1}");
+            //            worksheet.Cells[k * (rows + 4) + 1, 1].Value = ($"{p3} <{pairs[2][0][0]}");
             //            worksheet.Cells[k * (rows + 4) + 2, 1].Value = ($"{p1}/{p2}");
             //        }
             //        else if (k == depth - 1)
             //        {
-            //            worksheet.Cells[k * (rows + 4) + 1, 1].Value = ($"{p3} >{pairs[2][0].Item1}");
+            //            worksheet.Cells[k * (rows + 4) + 1, 1].Value = ($"{p3} >{pairs[2][0][0]}");
             //            worksheet.Cells[k * (rows + 4) + 2, 1].Value = ($"{p1}/{p2}");
             //        }
             //        else
             //        {
-            //            worksheet.Cells[k * (rows + 4) + 1, 1].Value = ($"{p3} {pairs[2][k - 1].Item1}-{pairs[2][k - 1].Item2}");
+            //            worksheet.Cells[k * (rows + 4) + 1, 1].Value = ($"{p3} {pairs[2][k - 1][0]}-{pairs[2][k - 1][1]}");
             //            worksheet.Cells[k * (rows + 4) + 2, 1].Value = ($"{p1}/{p2}");
             //        }
             //        int row1 = k * (rows + 4) + 1;
@@ -1673,15 +1952,15 @@ namespace 产出分布计算
             //        {
             //            if (j == 0)
             //            {
-            //                worksheet.Cells[row1 + 1, j + 2].Value = ($"<{pairs[1][0].Item1}");
+            //                worksheet.Cells[row1 + 1, j + 2].Value = ($"<{pairs[1][0][0]}");
             //            }
             //            else if (j == cols - 1)
             //            {
-            //                worksheet.Cells[row1 + 1, j + 2].Value = ($">{pairs[1][j - 2].Item2}");
+            //                worksheet.Cells[row1 + 1, j + 2].Value = ($">{pairs[1][j - 2][1]}");
             //            }
             //            else
             //            {
-            //                worksheet.Cells[row1 + 1, j + 2].Value = ($"{pairs[1][j - 1].Item1}-{pairs[1][j - 1].Item2}");
+            //                worksheet.Cells[row1 + 1, j + 2].Value = ($"{pairs[1][j - 1][0]}-{pairs[1][j - 1][1]}");
             //            }
             //        }
             //        worksheet.Cells[row1 + 1, cols + 2].Value = "Sum";
@@ -1691,15 +1970,15 @@ namespace 产出分布计算
 
             //            if (i == 0)
             //            {
-            //                worksheet.Cells[row1 + 2 + i, 1].Value = ($"<{pairs[0][0].Item1}");
+            //                worksheet.Cells[row1 + 2 + i, 1].Value = ($"<{pairs[0][0][0]}");
             //            }
             //            else if (i == rows - 1)
             //            {
-            //                worksheet.Cells[row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2].Item2}");
+            //                worksheet.Cells[row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2][1]}");
             //            }
             //            else
             //            {
-            //                worksheet.Cells[row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1].Item1}-{pairs[0][i - 1].Item2}");
+            //                worksheet.Cells[row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1][0]}-{pairs[0][i - 1][1]}");
             //            }
             //            for (int j = 0; j < cols; j++)
             //            {
@@ -1731,17 +2010,17 @@ namespace 产出分布计算
             //{
             //    if (k == 0)
             //    {
-            //        worksheet.Cells[nextRows + k * (rows + 4) + 1, 1].Value = ($"{p3} <{pairs[2][0].Item1}");
+            //        worksheet.Cells[nextRows + k * (rows + 4) + 1, 1].Value = ($"{p3} <{pairs[2][0][0]}");
             //        worksheet.Cells[nextRows + k * (rows + 4) + 2, 1].Value = ($"{p1}/{p2}");
             //    }
             //    else if (k == depth - 1)
             //    {
-            //        worksheet.Cells[nextRows + k * (rows + 4) + 1, 1].Value = ($"{p3} <{pairs[2][0].Item1}");
+            //        worksheet.Cells[nextRows + k * (rows + 4) + 1, 1].Value = ($"{p3} <{pairs[2][0][0]}");
             //        worksheet.Cells[nextRows + k * (rows + 4) + 2, 1].Value = ($"{p1}/{p2}");
             //    }
             //    else
             //    {
-            //        worksheet.Cells[nextRows + k * (rows + 4) + 1, 1].Value = ($"{p3} {pairs[2][k - 1].Item1}-{pairs[2][k - 1].Item2}");
+            //        worksheet.Cells[nextRows + k * (rows + 4) + 1, 1].Value = ($"{p3} {pairs[2][k - 1][0]}-{pairs[2][k - 1][1]}");
             //        worksheet.Cells[nextRows + k * (rows + 4) + 2, 1].Value = ($"{p1}/{p2}");
             //    }
             //    int row1 = k * (rows + 4) + 1;
@@ -1749,15 +2028,15 @@ namespace 产出分布计算
             //    {
             //        if (j == 0)
             //        {
-            //            worksheet.Cells[nextRows + row1 + 1, j + 2].Value = ($"<{pairs[1][0].Item1}");
+            //            worksheet.Cells[nextRows + row1 + 1, j + 2].Value = ($"<{pairs[1][0][0]}");
             //        }
             //        else if (j == cols - 1)
             //        {
-            //            worksheet.Cells[nextRows + row1 + 1, j + 2].Value = ($">{pairs[1][j - 2].Item2}");
+            //            worksheet.Cells[nextRows + row1 + 1, j + 2].Value = ($">{pairs[1][j - 2][1]}");
             //        }
             //        else
             //        {
-            //            worksheet.Cells[nextRows + row1 + 1, j + 2].Value = ($"{pairs[1][j - 1].Item1}-{pairs[1][j - 1].Item2}");
+            //            worksheet.Cells[nextRows + row1 + 1, j + 2].Value = ($"{pairs[1][j - 1][0]}-{pairs[1][j - 1][1]}");
             //        }
             //    }
             //    worksheet.Cells[nextRows + row1 + 1, cols + 2].Value = "Sum";
@@ -1767,15 +2046,15 @@ namespace 产出分布计算
 
             //        if (i == 0)
             //        {
-            //            worksheet.Cells[nextRows + row1 + 2 + i, 1].Value = ($"<{pairs[0][0].Item1}");
+            //            worksheet.Cells[nextRows + row1 + 2 + i, 1].Value = ($"<{pairs[0][0][0]}");
             //        }
             //        else if (i == rows - 1)
             //        {
-            //            worksheet.Cells[nextRows + row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2].Item2}");
+            //            worksheet.Cells[nextRows + row1 + 2 + i, 1].Value = ($">{pairs[0][i - 2][1]}");
             //        }
             //        else
             //        {
-            //            worksheet.Cells[nextRows + row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1].Item1}-{pairs[0][i - 1].Item2}");
+            //            worksheet.Cells[nextRows + row1 + 2 + i, 1].Value = ($"{pairs[0][i - 1][0]}-{pairs[0][i - 1][1]}");
             //        }
             //        for (int j = 0; j < cols; j++)
             //        {
@@ -1840,30 +2119,30 @@ namespace 产出分布计算
             //{
             //    if(t ==0)
             //    {
-            //        writer.WriteLine($"{p4} <{pairs[3][0].Item1},");
+            //        writer.WriteLine($"{p4} <{pairs[3][0][0]},");
             //    }
             //    else if(t == time - 1)
             //    {
-            //        writer.WriteLine($"{p4} >{pairs[3][t-2].Item2},");
+            //        writer.WriteLine($"{p4} >{pairs[3][t-2][1]},");
             //    }
             //    else
             //    {
-            //        writer.WriteLine($"{p4} {pairs[3][t-1].Item1}-{pairs[3][t-1].Item2},");
+            //        writer.WriteLine($"{p4} {pairs[3][t-1][0]}-{pairs[3][t-1][1]},");
             //    }
 
             //    for (int k = 0; k < depth; k++)
             //    {
             //        if (k == 0)
             //        {
-            //            writer.WriteLine($"{p3} <{pairs[2][0].Item1},");
+            //            writer.WriteLine($"{p3} <{pairs[2][0][0]},");
             //        }
             //        else if (k == depth - 1)
             //        {
-            //            writer.WriteLine($"{p3} >{pairs[2][k-2].Item2},");
+            //            writer.WriteLine($"{p3} >{pairs[2][k-2][1]},");
             //        }
             //        else
             //        {
-            //            writer.WriteLine($"{p3} {pairs[2][k-1].Item1}-{pairs[2][k-1].Item2},");
+            //            writer.WriteLine($"{p3} {pairs[2][k-1][0]}-{pairs[2][k-1][1]},");
             //        }
 
 
@@ -1872,15 +2151,15 @@ namespace 产出分布计算
             //        {
             //            if (j == 0)
             //            {
-            //                writer.Write($"{p1}/{p2},<{pairs[1][j].Item2},");
+            //                writer.Write($"{p1}/{p2},<{pairs[1][j][1]},");
             //            }
             //            else if(j == cols - 1)
             //            {
-            //                writer.Write($">{pairs[1][j-2].Item2},");
+            //                writer.Write($">{pairs[1][j-2][1]},");
             //            }
             //            else
             //            {
-            //                writer.Write($"{pairs[1][j-1].Item1}-{pairs[1][j-1].Item2},");
+            //                writer.Write($"{pairs[1][j-1][0]}-{pairs[1][j-1][1]},");
             //            }
 
             //        }
@@ -1890,15 +2169,15 @@ namespace 产出分布计算
             //        {
             //            if (i == 0)
             //            {
-            //                writer.Write($"<{pairs[0][i].Item2},");
+            //                writer.Write($"<{pairs[0][i][1]},");
             //            }
             //            else if (i == rows-1)
             //            {
-            //                writer.Write($">{pairs[0][i-2].Item2},");
+            //                writer.Write($">{pairs[0][i-2][1]},");
             //            }
             //            else
             //            {
-            //                writer.Write($"{pairs[0][i-1].Item1}-{pairs[0][i - 1].Item2},");
+            //                writer.Write($"{pairs[0][i-1][0]}-{pairs[0][i - 1][1]},");
             //            }
             //            for (int j = 0; j < cols; j++)
             //            {
@@ -1932,21 +2211,21 @@ namespace 产出分布计算
             }
         }
 
-        List<List<(double, double)>> GeneratePermutations(List<(double, double)>[] pairs)
+        List<List<double[]>> GeneratePermutations(List<double[]>[] pairs)
         {
-            List<List<(double, double)>> result = new List<List<(double, double)>>();
+            List<List<double[]>> result = new List<List<double[]>>();
 
             // 使用递归生成全排列
-            GeneratePermutationsRecursive(pairs, 0, new List<(double, double)>(), result);
+            GeneratePermutationsRecursive(pairs, 0, new List<double[]>(), result);
 
             return result;
         }
 
-        void GeneratePermutationsRecursive(List<(double, double)>[] pairs, int index, List<(double, double)> current, List<List<(double, double)>> result)
+        void GeneratePermutationsRecursive(List<double[]>[] pairs, int index, List<double[]> current, List<List<double[]>> result)
         {
             if (index == pairs.Length)
             {
-                result.Add(new List<(double, double)>(current));
+                result.Add(new List<double[]>(current));
                 return;
             }
 
@@ -1958,7 +2237,7 @@ namespace 产出分布计算
             }
         }
 
-        void SaveToCsv(List<List<(double, double)>> data, StreamWriter writer, int[] col)
+        void SaveToCsv(List<List<double[]>> data, StreamWriter writer, int[] col)
         {
             int rowIndex = 1;  // 用于第三列的排序编号
 
@@ -1977,23 +2256,23 @@ namespace 产出分布计算
                 // 按指定列填充数据
                 if (row.Count > 0)
                 {
-                    line[col[0]] = row[0].Item1.ToString();
-                    line[col[0]+1] = row[0].Item2.ToString();
+                    line[col[0]] = row[0][0].ToString();
+                    line[col[0]+1] = row[0][1].ToString();
                 }
                 if (row.Count > 1)
                 {
-                    line[col[1]] = row[1].Item1.ToString();
-                    line[col[1]+1] = row[1].Item2.ToString();
+                    line[col[1]] = row[1][0].ToString();
+                    line[col[1]+1] = row[1][1].ToString();
                 }
                 if (row.Count > 2)
                 {
-                    line[col[2]] = row[2].Item1.ToString();
-                    line[col[2]+1] = row[2].Item2.ToString();
+                    line[col[2]] = row[2][0].ToString();
+                    line[col[2]+1] = row[2][1].ToString();
                 }
                 if (row.Count > 3)
                 {
-                    line[col[3]] = row[3].Item1.ToString();
-                    line[col[3]+1] = row[3].Item2.ToString();
+                    line[col[3]] = row[3][0].ToString();
+                    line[col[3]+1] = row[3][1].ToString();
                 }
 
                 // 将行写入CSV文件
@@ -2001,128 +2280,144 @@ namespace 产出分布计算
             }
         }
 
-             void genButton_Click(object sender, RoutedEventArgs e)
+        void genButton_Click(object sender, RoutedEventArgs e)
+        {
+            int dim = 0;
+            if (!int.TryParse(dimensionTextBox.Text, out dim))
             {
-                int dim = 0;
-                if (!int.TryParse(dimensionTextBox.Text, out dim))
-                {
-                    System.Windows.MessageBox.Show("Invalid dimension value. Please enter a valid integer.");
-                    return;
-                }
+                System.Windows.MessageBox.Show("Invalid dimension value. Please enter a valid integer.");
+                return;
+            }
 
-                // 定义字典
-                Dictionary<string, int> dict = new Dictionary<string, int>
-                {
-                    {"VF1", 4}, {"VF2", 6}, {"VF3", 8}, {"VF4", 10}, {"VZ1", 12},
-                    {"IR", 14}, {"HW1", 16}, {"LOP1", 18}, {"WLP1", 20}, {"WLD1", 22},
-                    {"IR1", 24}, {"VFD", 26}, {"DVF", 28}, {"IR2", 30}, {"WLC1", 32},
-                    {"VF5", 34}, {"VF6", 36}, {"VF7", 38}, {"VF8", 40}, {"DVF1", 42},
-                    {"DVF2", 44}, {"VZ2", 46}, {"VZ3", 48}, {"VZ4", 50}, {"VZ5", 52},
-                    {"IR3", 54}, {"IR4", 56}, {"IR5", 58}, {"IR6", 60}, {"IF", 62},
-                    {"IF1", 64}, {"IF2", 66}, {"LOP2", 68}, {"WLP2", 70}, {"WLD2", 72},
-                    {"HW2", 74}, {"WLC2", 76}
-                };
+            string outputFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OutputFolder");
+            string JsonfilePath = System.IO.Path.Combine(outputFolder, "pairsConfig.json"); 
+            
+            // 检查文件夹是否存在
+            if (!Directory.Exists(outputFolder))
+            {
+                Directory.CreateDirectory(outputFolder);
+            }
+            // 定义字典
+            Dictionary<string, int> dict = new Dictionary<string, int>
+            {
+                {"VF1", 4}, {"VF2", 6}, {"VF3", 8}, {"VF4", 10}, {"VZ1", 12},
+                {"IR", 14}, {"HW1", 16}, {"LOP1", 18}, {"WLP1", 20}, {"WLD1", 22},
+                {"IR1", 24}, {"VFD", 26}, {"DVF", 28}, {"IR2", 30}, {"WLC1", 32},
+                {"VF5", 34}, {"VF6", 36}, {"VF7", 38}, {"VF8", 40}, {"DVF1", 42},
+                {"DVF2", 44}, {"VZ2", 46}, {"VZ3", 48}, {"VZ4", 50}, {"VZ5", 52},
+                {"IR3", 54}, {"IR4", 56}, {"IR5", 58}, {"IR6", 60}, {"IF", 62},
+                {"IF1", 64}, {"IF2", 66}, {"LOP2", 68}, {"WLP2", 70}, {"WLD2", 72},
+                {"HW2", 74}, {"WLC2", 76}
+            };
 
             // 获取文件名
             string fileName = BinName.Text + ".csv";
+            fileName = System.IO.Path.Combine(outputFolder, fileName);
 
-                // 写入文件内容
-                using (StreamWriter writer = new StreamWriter(fileName))
+            // 写入文件内容
+            using (StreamWriter writer = new StreamWriter(fileName))
+            {
+                // 写入每行内容
+                writer.WriteLine("ResortBin");
+                writer.WriteLine("Format1");
+                writer.WriteLine("Bin Table Name,"+ BinName.Text);
+                writer.WriteLine("");
+                writer.WriteLine("BinSetting,"+ BinSetting.Text);
+                writer.WriteLine("TestItems,,#,,VF1,VF1,VF2,VF2,VF3,VF3,VF4,VF4,VZ1,VZ1,IR,IR,HW1,HW1,LOP1,LOP1,WLP1,WLP1,WLD1,WLD1,IR1,IR1,VFD,VFD,DVF,DVF,IR2,IR2,WLC1,WLC1,VF5,VF5,VF6,VF6,VF7,VF7,VF8,VF8,DVF1,DVF1,DVF2,DVF2,VZ2,VZ2,VZ3,VZ3,VZ4,VZ4,VZ5,VZ5,IR3,IR3,IR4,IR4,IR5,IR5,IR6,IR6,IF,IF,IF1,IF1,IF2,IF2,LOP2,LOP2,WLP2,WLP2,WLD2,WLD2,HW2,HW2,WLC2,WLC2,");
+                writer.WriteLine("BinEnable,BinType,BIN,Code,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,");
+                try
                 {
-                    // 写入每行内容
-                    writer.WriteLine("ResortBin");
-                    writer.WriteLine("Format1");
-                    writer.WriteLine("Bin Table Name,"+ BinName.Text);
-                    writer.WriteLine("");
-                    writer.WriteLine("BinSetting,"+ BinSetting.Text);
-                    writer.WriteLine("TestItems,,#,,VF1,VF1,VF2,VF2,VF3,VF3,VF4,VF4,VZ1,VZ1,IR,IR,HW1,HW1,LOP1,LOP1,WLP1,WLP1,WLD1,WLD1,IR1,IR1,VFD,VFD,DVF,DVF,IR2,IR2,WLC1,WLC1,VF5,VF5,VF6,VF6,VF7,VF7,VF8,VF8,DVF1,DVF1,DVF2,DVF2,VZ2,VZ2,VZ3,VZ3,VZ4,VZ4,VZ5,VZ5,IR3,IR3,IR4,IR4,IR5,IR5,IR6,IR6,IF,IF,IF1,IF1,IF2,IF2,LOP2,LOP2,WLP2,WLP2,WLD2,WLD2,HW2,HW2,WLC2,WLC2,");
-                    writer.WriteLine("BinEnable,BinType,BIN,Code,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,Min,Max,");
-                    try
+                    // 获取参数
+                    int dimension = int.Parse(dimensionTextBox.Text);
+                    if (dimension < 1 || dimension > 4)
                     {
-                        // 获取参数
-                        int dimension = int.Parse(dimensionTextBox.Text);
-                        if (dimension < 1 || dimension > 4)
-                        {
-                            throw new ArgumentException("Dimension must be between 1 and 4.");
-                        }
-
-                        double[] minValues = new double[dimension];
-                        double[] stepSizes = new double[dimension];
-                        int[] counts = new int[dimension];
-                        int[] col = new int[dimension];
-
-                        if (dimension >= 1)
-                        {
-                            if (dict.ContainsKey(this.para1.Text.ToUpper())) col[0] = dict[this.para1.Text.ToUpper()];
-                            minValues[0] = double.Parse(this.para1min.Text);
-                            stepSizes[0] = double.Parse(this.para1rta.Text);
-                            counts[0] = int.Parse(this.para1num.Text);
-                        }
-                        if (dimension >= 2)
-                        {
-                            if (dict.ContainsKey(this.para2.Text.ToUpper())) col[1] = dict[this.para2.Text.ToUpper()];
-                            minValues[1] = double.Parse(this.para2min.Text);
-                            stepSizes[1] = double.Parse(this.para2rta.Text);
-                            counts[1] = int.Parse(this.para2num.Text);
-                        }
-                        if (dimension >= 3)
-                        {
-                            if (dict.ContainsKey(this.para3.Text.ToUpper())) col[2] = dict[this.para3.Text.ToUpper()];
-                            minValues[2] = double.Parse(this.para3min.Text);
-                            stepSizes[2] = double.Parse(this.para3rta.Text);
-                            counts[2] = int.Parse(this.para3num.Text);
-                        }
-                        if (dimension >= 4)
-                        {
-                            if (dict.ContainsKey(this.para4.Text.ToUpper())) col[3] = dict[this.para4.Text.ToUpper()];
-                            minValues[3] = double.Parse(this.para4min.Text);
-                            stepSizes[3] = double.Parse(this.para4rta.Text);
-                            counts[3] = int.Parse(this.para4num.Text);
-                        }
-
-                        // 存储生成的pair数组
-                        List<(double, double)>[] pairs = new List<(double, double)>[dimension];
-
-                        // 生成pair数组
-                        for (int i = 0; i < dimension; i++)
-                        {
-                            pairs[i] = new List<(double, double)>();
-                            for (int j = 0; j < counts[i]; j++)
-                            {
-                                double first = Math.Round(minValues[i] + j * stepSizes[i], 6);
-                                double second = Math.Round(first + stepSizes[i], 6);
-                                pairs[i].Add((first, second));
-                            }
-                        }
-
-                        // 生成全排列结果
-                        var result = GeneratePermutations(pairs);
-                        SaveToCsv(result, writer,col);
+                        throw new ArgumentException("Dimension must be between 1 and 4.");
                     }
-                    catch (Exception ex)
+
+                    double[] minValues = new double[dimension];
+                    double[] stepSizes = new double[dimension];
+                    int[] counts = new int[dimension];
+                    int[] col = new int[dimension];
+                    string[] paraStrings = new string[dimension];
+                    if (dimension >= 1)
                     {
-                        System.Windows.MessageBox.Show($"生成数组时出现错误：{ex.Message}");
+                        if (dict.ContainsKey(this.para1.Text.ToUpper())) col[0] = dict[this.para1.Text.ToUpper()];
+                        paraStrings[0] = this.para1.Text.ToUpper();
+                        minValues[0] = double.Parse(this.para1min.Text);
+                        stepSizes[0] = double.Parse(this.para1rta.Text);
+                        counts[0] = int.Parse(this.para1num.Text);
                     }
+                    if (dimension >= 2)
+                    {
+                        if (dict.ContainsKey(this.para2.Text.ToUpper())) col[1] = dict[this.para2.Text.ToUpper()];
+                        paraStrings[1] = this.para2.Text.ToUpper();
+                        minValues[1] = double.Parse(this.para2min.Text);
+                        stepSizes[1] = double.Parse(this.para2rta.Text);
+                        counts[1] = int.Parse(this.para2num.Text);
+                    }
+                    if (dimension >= 3)
+                    {
+                        if (dict.ContainsKey(this.para3.Text.ToUpper())) col[2] = dict[this.para3.Text.ToUpper()];
+                        paraStrings[2] = this.para3.Text.ToUpper();
+                        minValues[2] = double.Parse(this.para3min.Text);
+                        stepSizes[2] = double.Parse(this.para3rta.Text);
+                        counts[2] = int.Parse(this.para3num.Text);
+                    }
+                    if (dimension >= 4)
+                    {
+                        if (dict.ContainsKey(this.para4.Text.ToUpper())) col[3] = dict[this.para4.Text.ToUpper()];
+                        paraStrings[3] = this.para4.Text.ToUpper();
+                        minValues[3] = double.Parse(this.para4min.Text);
+                        stepSizes[3] = double.Parse(this.para4rta.Text);
+                        counts[3] = int.Parse(this.para4num.Text);
+                    }
+
+                    var pairsDict = new Dictionary<string, List<double[]>>();
+
+                    // 存储生成的pair数组
+                    List<double[]>[] pairs = new List<double[]>[dimension];
+
+                    // 生成pair数组
+                    for (int i = 0; i < dimension; i++)
+                    {
+                        pairs[i] = new List<double[]>();
+                        for (int j = 0; j < counts[i]; j++)
+                        {
+                            double first = Math.Round(minValues[i] + j * stepSizes[i], 6);
+                            double second = Math.Round(first + stepSizes[i], 6);
+                            pairs[i].Add(new double[] { first, second });
+                        }
+                        pairsDict[paraStrings[i]] = pairs[i];
+                    }
+
+                    ExportToCustomJson(pairsDict, JsonfilePath);
+
+                    // 生成全排列结果
+                    var result = GeneratePermutations(pairs);
+                            SaveToCsv(result, writer,col);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Windows.MessageBox.Show($"生成数组时出现错误：{ex.Message}");
+                        }
+                    }
+
+            // 弹出消息框询问是否打开文件
+            MessageBoxResult Getresult = System.Windows.MessageBox.Show("Excel 文件已导出到 " + fileName + "\n是否打开该文件？", "导出成功", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            // 根据用户的选择执行相应的操作
+            if (Getresult == MessageBoxResult.Yes)
+            {
+                // 打开文件
+                try
+                {
+                    Process.Start(new ProcessStartInfo { FileName = fileName, UseShellExecute = true });
                 }
-
-                // 弹出消息框询问是否打开文件
-                MessageBoxResult Getresult = System.Windows.MessageBox.Show("Excel 文件已导出到 " + fileName + "\n是否打开该文件？", "导出成功", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-                // 根据用户的选择执行相应的操作
-                if (Getresult == MessageBoxResult.Yes)
+                catch (Exception ex)
                 {
-                    // 打开文件
-                    try
-                    {
-                        Process.Start(new ProcessStartInfo { FileName = fileName, UseShellExecute = true });
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Windows.MessageBox.Show("打开文件失败：" + ex.Message, "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
+                    System.Windows.MessageBox.Show("打开文件失败：" + ex.Message, "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
-
+        }
     }
-
 }

@@ -37,6 +37,11 @@
 				<Label Content="文件路径" HorizontalContentAlignment="Center" Width="100"/>
 				<TextBox x:Name="filePath" Text="\\192.168.3.84\aoi\Resorting" Width="200" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Height="20"/>
 			</StackPanel>
+			
+			<StackPanel Orientation="Horizontal" Height="30">
+				<Label Content="文件名后缀" HorizontalContentAlignment="Center" Width="100"/>
+				<TextBox x:Name="filenameSuffix" Text="-F" Width="100" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Height="20"/>
+			</StackPanel>
 
 			<StackPanel  Grid.ColumnSpan="3" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,10,0,0">
 				<Grid>
@@ -67,7 +72,7 @@
 				</Grid>
 
 			</StackPanel>
-			<StackPanel Orientation="Horizontal" Height="150" Width ="300"  Margin="0,30,0,0" >
+			<StackPanel Orientation="Horizontal" Height="150" Width ="300"  Margin="0,20,0,0" >
 				<ListBox x:Name="parameterListBox" VerticalAlignment="Center" HorizontalAlignment="Left" Height="130" Width="300" />
 			</StackPanel>
 		</StackPanel>
@@ -86,6 +91,7 @@
 			</Grid.RowDefinitions>
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="160"/>
+				<ColumnDefinition Width="110"/>
 				<ColumnDefinition Width="110"/>
 				<ColumnDefinition Width="110"/>
 				<ColumnDefinition Width="110"/>
@@ -169,6 +175,7 @@
 			<Button x:Name="genButton" Grid.Row="8" Click="genButton_Click" Grid.Column="2" Width="100" Height="30" Content="生成" Margin="5,15,5,15" Background="#007ACC" Foreground="White"/>
 			<Button x:Name="importButton" Grid.Row="8" Click="importButton_Click" Grid.Column="3" Width="100" Height="30" Content="导入" Margin="5,15,5,15" Background="#007ACC" Foreground="White"/>
 			<Button x:Name="runButton" Grid.Row="8" Click="runButton_Click" Grid.Column="4" Width="100" Height="30" Content="运行" Margin="5,15,5,15" Background="#007ACC" Foreground="White"/>
+			<Button x:Name="runButton2" Grid.Row="8" Click="runButton_Click_New" Grid.Column="5" Width="100" Height="30" Content="不规则计算" Margin="5,15,5,15" Background="#007ACC" Foreground="White"/>
 		</Grid>
 	</Grid>
 </Page>
