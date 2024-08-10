@@ -256,15 +256,15 @@ namespace 产出分布计算
         bool breakFlag = false;
 
         Dictionary<string, int> dict2 = new Dictionary<string, int>
-                {
-                    {"TEST", 0}, {"BIN", 1}, {"VF1", 2}, {"VF2", 3}, {"VF3", 4}, {"VF4", 5}, {"VF5", 6}, {"VF6", 7}, {"DVF", 8},
-                    {"VF", 9}, {"VFD", 10}, {"VZ1", 11}, {"VZ2", 12}, {"IR", 13}, {"LOP1", 14}, {"LOP2", 15}, {"LOP3", 16},
-                    {"WLP1", 17}, {"WLD1", 18}, {"WLC1", 19}, {"HW1", 20}, {"PURITY1", 21}, {"X1", 22}, {"Y1", 23}, {"Z1", 24},
-                    {"ST1", 25}, {"INT1", 26}, {"WLP2", 27}, {"WLD2", 28}, {"WLC2", 29}, {"HW2", 30}, {"PURITY2", 31}, {"DVF1", 32},
-                    {"DVF2", 33}, {"INT2", 34}, {"ST2", 35}, {"VF7", 36}, {"VF8", 37}, {"IR3", 38}, {"IR4", 39}, {"IR5", 40}, {"IR6", 41},
-                    {"VZ3", 42}, {"VZ4", 43}, {"VZ5", 44}, {"IF", 45}, {"IF1", 46}, {"IF2", 47}, {"ESD1", 48}, {"ESD2", 49}, {"IR1", 50},
-                    {"IR2", 51}, {"ESD1PASS", 52}, {"ESD2PASS", 53}, {"PosX", 54}, {"PosY", 55}
-                };
+        {
+            {"TEST", 0}, {"BIN", 1}, {"VF1", 2}, {"VF2", 3}, {"VF3", 4}, {"VF4", 5}, {"VF5", 6}, {"VF6", 7}, {"DVF", 8},
+            {"VF", 9}, {"VFD", 10}, {"VZ1", 11}, {"VZ2", 12}, {"IR", 13}, {"LOP1", 14}, {"LOP2", 15}, {"LOP3", 16},
+            {"WLP1", 17}, {"WLD1", 18}, {"WLC1", 19}, {"HW1", 20}, {"PURITY1", 21}, {"X1", 22}, {"Y1", 23}, {"Z1", 24},
+            {"ST1", 25}, {"INT1", 26}, {"WLP2", 27}, {"WLD2", 28}, {"WLC2", 29}, {"HW2", 30}, {"PURITY2", 31}, {"DVF1", 32},
+            {"DVF2", 33}, {"INT2", 34}, {"ST2", 35}, {"VF7", 36}, {"VF8", 37}, {"IR3", 38}, {"IR4", 39}, {"IR5", 40}, {"IR6", 41},
+            {"VZ3", 42}, {"VZ4", 43}, {"VZ5", 44}, {"IF", 45}, {"IF1", 46}, {"IF2", 47}, {"ESD1", 48}, {"ESD2", 49}, {"IR1", 50},
+            {"IR2", 51}, {"ESD1PASS", 52}, {"ESD2PASS", 53}, {"PosX", 54}, {"PosY", 55}
+        };
 
         private Dictionary<string, Wafer> waferList = new Dictionary<string, Wafer>();
 
@@ -417,6 +417,7 @@ namespace 产出分布计算
             if (!int.TryParse(dimensionTextBox.Text, out int dim))
             {
                 System.Windows.MessageBox.Show("Invalid dimension value. Please enter a valid integer.");
+                EnableAllButtons();
                 return;
             }
 
@@ -437,6 +438,7 @@ namespace 产出分布计算
             if (dim >= 4)
             {
                 MessageBox.Show("4维数据产出分布未开发！");
+                EnableAllButtons();
                 return;
                 if (dict2.ContainsKey(this.para4.Text.ToUpper())) col2[3] = dict2[this.para4.Text.ToUpper()];
             }
@@ -483,45 +485,31 @@ namespace 产出分布计算
             }
 
             string filePathText = filePath.Text;
-            if (openFileDialog.ShowDialog() == true)
+
+            string[] lines = multiLineTextBox.Text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+            int totalLines = lines.Count();
+            DateTime startTime = DateTime.Now; // 记录开始时间
+            List<Task> tasks = new List<Task>(); // 声明 tasks 列表
+            Progress = 0;
+            progressBar.Value = 0;
+            int processedLines = 0;
+            string fileSuffix = this.filenameSuffix.Text;
+            // 逐行读取并处理
+            foreach (string line in lines)
             {
-                DateTime startTime = DateTime.Now; // 记录开始时间
 
-                List<Task> tasks = new List<Task>(); // 声明 tasks 列表
-
-                int totalLines = 0;
-
-                // 计算总行数
-                foreach (string filename in openFileDialog.FileNames)
+                string filePathTemp = System.IO.Path.Combine(filePathText, line + fileSuffix + ".csv");
+                tasks.Add(Task.Run(() =>
                 {
-                    totalLines += File.ReadAllLines(filename).Length;
-                }
-
-                Progress = 0;
-                progressBar.Value = 0;
-                int processedLines = 0;
-                string fileSuffix = this.filenameSuffix.Text;
-
-                // 尝试打开文件，如果文件已经被打开会引发 IOException 异常
-                using (StreamReader sr = new StreamReader(openFileDialog.FileName))
-                {
-                    string line;
-                    while ((line = sr.ReadLine()) != null)
+                    importWaferFiles(filePathTemp, dim, col2, output_csv_file);
+                    processedLines++;
+                    Progress = (int)Math.Ceiling(processedLines * 100.0 / totalLines);
+                    Dispatcher.Invoke(() =>
                     {
-                        string filePathTemp = System.IO.Path.Combine(filePathText, line + fileSuffix + ".csv");
-                        tasks.Add(Task.Run(() =>
-                        {
-                            importWaferFiles(filePathTemp, dim, col2, output_csv_file);
-                            processedLines++;
-                            Progress = (int)Math.Ceiling(processedLines * 100.0 / totalLines);
-                            Dispatcher.Invoke(() =>
-                            {
-                                progressBar.Value = Progress;
-                                progressText.Text = $"{Progress}%";
-                            });
-                        }));
-                    }
-                }
+                        progressBar.Value = Progress;
+                        progressText.Text = $"{Progress}%";
+                    });
+                }));
 
                 await Task.WhenAll(tasks); // 等待所有任务完成
 
@@ -541,15 +529,12 @@ namespace 产出分布计算
                                 }
                             }
                         }
-                    })); 
+                    }));
                 }
                 await Task.WhenAll(tasks); // 等待所有任务完成
-                MessageBox.Show("导入文件成功！");
             }
-            else
-            {
-                MessageBox.Show("请输入文件！");
-            }
+            MessageBox.Show("导入文件成功！");
+
             EnableAllButtons();
         }
 
@@ -655,6 +640,7 @@ namespace 产出分布计算
             if (!int.TryParse(dimensionTextBox.Text, out int dim))
             {
                 System.Windows.MessageBox.Show("Invalid dimension value. Please enter a valid integer.");
+                EnableAllButtons();
                 return;
             }
 
@@ -675,7 +661,9 @@ namespace 产出分布计算
             int dimension = dim;
             if (dimension < 1 || dimension > 4)
             {
-                throw new ArgumentException("Dimension must be between 1 and 4.");
+                MessageBox.Show("Dimension must be between 1 and 4.");
+                EnableAllButtons();
+                return;
             }
 
             double[] minValues = new double[dimension];
@@ -732,6 +720,7 @@ namespace 产出分布计算
             if (dimension >= 4)
             {
                 MessageBox.Show("4维数据产出分布未开发！");
+                EnableAllButtons();
                 return;
                 if (dict.ContainsKey(this.para4.Text.ToUpper())) col[3] = dict[this.para4.Text.ToUpper()];
                 paraStrings[3] = this.para4.Text.ToUpper();
@@ -877,6 +866,7 @@ namespace 产出分布计算
             if (!int.TryParse(dimensionTextBox.Text, out int dim))
             {
                 System.Windows.MessageBox.Show("Invalid dimension value. Please enter a valid integer.");
+                EnableAllButtons();
                 return;
             }
 
@@ -896,23 +886,28 @@ namespace 产出分布计算
                 {"HW2", 74}, {"WLC2", 76}
             };
 
-            // 读取 JSON 文件内容
-            string jsonContent = File.ReadAllText(JsonfilePath);
 
-            // 解析 JSON 为字典
-            var pairsDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, List<double[]>>>(jsonContent);
 
 
             int dimension = dim;
 
             if (dimension < 1 || dimension > 4)
             {
-                throw new ArgumentException("Dimension must be between 1 and 4.");
+                MessageBox.Show("Dimension must be between 1 and 4.");
+                EnableAllButtons();
+                return;
             }
+            // 读取 JSON 文件内容
+            string jsonContent = File.ReadAllText(JsonfilePath);
 
-            if(pairsDict.Count != dimension)
+            // 解析 JSON 为字典
+            var pairsDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, List<double[]>>>(jsonContent);
+
+            if (pairsDict.Count != dimension)
             {
-                throw new ArgumentException("Json Dimension is not right!");
+                MessageBox.Show("Json Dimension is not right!");
+                EnableAllButtons();
+                return;
             }
 
 
@@ -957,6 +952,7 @@ namespace 产出分布计算
             if (dimension >= 4)
             {
                 MessageBox.Show("4维数据产出分布未开发！");
+                EnableAllButtons();
                 return;
                 if (dict.ContainsKey(this.para4.Text.ToUpper())) col[3] = dict[this.para4.Text.ToUpper()];
                 paraStrings[3] = this.para4.Text.ToUpper();
@@ -971,9 +967,11 @@ namespace 产出分布计算
             foreach (var pair in pairsDict)
             {
                 pairs[i] = new List<double[]>();
-                if(pair.Key != paraStrings[i])
+                if(pair.Key.Trim() != paraStrings[i].Trim())
                 {
-                    throw new ArgumentException("Json Para is not correct!");
+                    MessageBox.Show("Json Para is not correct!");
+                    EnableAllButtons();
+                    return;
                 }
 
                 foreach (var subArray in pair.Value)
@@ -1279,6 +1277,7 @@ namespace 产出分布计算
                     {
                         // Excel 文件已存在并且被打开，弹出提示框显示
                         MessageBox.Show($"文件 {output_excel_file} 已存在并且被打开，请关闭后重新保存。", "文件已打开", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                        EnableAllButtons();
                         return;
                     }
                 }
@@ -1428,13 +1427,11 @@ namespace 产出分布计算
             CreateExcelWithColorScale(worksheet, row1 + 1 , 1, row1 + 1 + rows, cols + 2);
 
             // next rows total percent matrix 
+
             // next rows total percent matrix 
+
             // next rows total percent matrix 
-            // next rows total percent matrix 
-            // next rows total percent matrix 
-            // next rows total percent matrix 
-            // next rows total percent matrix 
-            // next rows total percent matrix 
+
             row1 = rows + 2 + row1;
             worksheet.Cells[row1 + 2, 1].Value = BinName.Text;
             worksheet.Cells[row1 + 2, 2].Value = "片量";
@@ -1615,6 +1612,7 @@ namespace 产出分布计算
                     {
                         // Excel 文件已存在并且被打开，弹出提示框显示
                         MessageBox.Show($"文件 {output_excel_file} 已存在并且被打开，请关闭后重新保存。", "文件已打开", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                        EnableAllButtons();
                         return;
                     }
                 }
@@ -1880,6 +1878,7 @@ namespace 产出分布计算
                     catch (IOException)
                     {
                         MessageBox.Show($"文件 {output_excel_file} 已存在并且被打开，请关闭后重新保存。", "文件已打开", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                        EnableAllButtons();
                         return;
                     }
                 }
@@ -2286,6 +2285,7 @@ namespace 产出分布计算
             if (!int.TryParse(dimensionTextBox.Text, out dim))
             {
                 System.Windows.MessageBox.Show("Invalid dimension value. Please enter a valid integer.");
+                EnableAllButtons();
                 return;
             }
 
@@ -2331,7 +2331,9 @@ namespace 产出分布计算
                     int dimension = int.Parse(dimensionTextBox.Text);
                     if (dimension < 1 || dimension > 4)
                     {
-                        throw new ArgumentException("Dimension must be between 1 and 4.");
+                        MessageBox.Show("Dimension must be between 1 and 4.");
+                        EnableAllButtons();
+                        return;
                     }
 
                     double[] minValues = new double[dimension];
