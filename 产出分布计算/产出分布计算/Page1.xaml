@@ -11,49 +11,61 @@
 
 	<Grid >
 		<Grid.RowDefinitions>
-			<RowDefinition Height="15"/>
 			<RowDefinition Height="*"/>
 		</Grid.RowDefinitions>
 		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="319"/>
+			<ColumnDefinition Width="320"/>
 			<ColumnDefinition Width="91"/>
 			<ColumnDefinition Width="490"/>
 		</Grid.ColumnDefinitions>
 
 		<StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical" Margin="0,0,80,0" Grid.ColumnSpan="2" >
 			<StackPanel Orientation="Horizontal" Height="30">
-				<Label Content="内部型号" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Width="100" Height="30"/>
+				<Label Content="内部型号" VerticalContentAlignment="Center" HorizontalContentAlignment="left" Width="80" Height="30"/>
 				<TextBox x:Name="BinName" Text="BOC1C30D" Width="100" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Height="20"/>
 			</StackPanel>
 			<StackPanel Orientation="Horizontal" Height="30">
-				<Label Content="BinSetting" HorizontalContentAlignment="Center" Width="100"/>
+				<Label Content="BinSetting" HorizontalContentAlignment="left" Width="80"/>
 				<TextBox x:Name="BinSetting" Text="50" Width="100" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Height="20"/>
 			</StackPanel>
 			<StackPanel Orientation="Horizontal" Height="30">
-				<Label Content="维数" HorizontalContentAlignment="Center" Width="100"/>
+				<Label Content="维数" HorizontalContentAlignment="left" Width="80"/>
 				<TextBox x:Name="dimensionTextBox" Text="2" Width="100" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Height="20"/>
 			</StackPanel>
 			<StackPanel Orientation="Horizontal" Height="30">
-				<Label Content="文件路径" HorizontalContentAlignment="Center" Width="100"/>
-				<TextBox x:Name="filePath" Text="\\192.168.3.84\aoi\Resorting" Width="200" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Height="20"/>
+				<Label Content="文件路径" HorizontalContentAlignment="left" Width="80"/>
+				<TextBox x:Name="filePath" Text="\\192.168.3.84\aoi\Resorting" Width="236" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Height="20"/>
 			</StackPanel>
-			
+
 			<StackPanel Orientation="Horizontal" Height="30">
-				<Label Content="文件名后缀" HorizontalContentAlignment="Center" Width="100"/>
+				<Label Content="文件名后缀" HorizontalContentAlignment="left" Width="80"/>
 				<TextBox x:Name="filenameSuffix" Text="-F" Width="100" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Height="20"/>
 			</StackPanel>
 
-			<StackPanel  Grid.ColumnSpan="3" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,10,0,0">
+			
+			<StackPanel Orientation="Horizontal" Height="150" Width ="300"  Margin="0,10,0,0" >
+				<TextBox x:Name="multiLineTextBox" 
+                 AcceptsReturn="True" 
+                 AcceptsTab="True" 
+                 VerticalScrollBarVisibility="Visible" 
+                 HorizontalScrollBarVisibility="Auto"
+                 TextWrapping="Wrap"
+				 HorizontalContentAlignment="left"
+				HorizontalAlignment="Left" 
+                 Height="150" Width="300"  />
+			</StackPanel>
+
+			<StackPanel  Grid.ColumnSpan="3" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,20,0,0">
 				<Grid>
 					<!-- 进度条 -->
 					<ProgressBar x:Name="progressBar" 
-                 HorizontalAlignment="Center" 
-                 VerticalAlignment="Center"
-                 Width="300" Height="30" 
-                 Minimum="0" Maximum="100" 
-                 BorderThickness="1" BorderBrush="#2196F3"
-                 Background="#E0E0E0"
-                 Foreground="#2196F3">
+					 HorizontalAlignment="Center" 
+					 VerticalAlignment="Center"
+					 Width="300" Height="30" 
+					 Minimum="0" Maximum="100" 
+					 BorderThickness="1" BorderBrush="#2196F3"
+					 Background="#E0E0E0"
+					 Foreground="#2196F3">		
 						<ProgressBar.Resources>
 							<Style TargetType="TextBlock">
 								<Setter Property="Foreground" Value="#2196F3"/>
@@ -63,17 +75,13 @@
 
 					<!-- 进度文本 -->
 					<TextBlock x:Name="progressText" 
-               HorizontalAlignment="Center" 
-               VerticalAlignment="Center" 
-               Foreground="black" FontWeight="Bold" 
-               FontSize="16" 
-               Text="{Binding Path=Value, ElementName=progressBar, StringFormat={}{0}%}">
+					   HorizontalAlignment="Center" 
+					   VerticalAlignment="Center" 
+					   Foreground="black" FontWeight="Bold" 
+					   FontSize="16" 
+					   Text="{Binding Path=Value, ElementName=progressBar, StringFormat={}{0}%}">
 					</TextBlock>
 				</Grid>
-
-			</StackPanel>
-			<StackPanel Orientation="Horizontal" Height="150" Width ="300"  Margin="0,20,0,0" >
-				<ListBox x:Name="parameterListBox" VerticalAlignment="Center" HorizontalAlignment="Left" Height="130" Width="300" />
 			</StackPanel>
 		</StackPanel>
 
@@ -87,6 +95,7 @@
 				<RowDefinition Height="30"/>
 				<RowDefinition Height="30"/>
 				<RowDefinition Height="30"/>
+				<RowDefinition Height="60"/>
 				<RowDefinition Height="60"/>
 			</Grid.RowDefinitions>
 			<Grid.ColumnDefinitions>
@@ -115,7 +124,7 @@
 				<ComboBoxItem Content="乘"/>
 				<ComboBoxItem Content="除"/>
 			</ComboBox>
-			<TextBox x:Name="fix1num"  VerticalAlignment="Top" HorizontalAlignment="Right"  Grid.Row="1" Height="20" Width ="60" Grid.Column="5" Text="1" Margin="0,0,20,0" />
+			<TextBox x:Name="fix1num"  VerticalAlignment="Top" HorizontalAlignment="Right"  Grid.Row="1" Height="20" Width ="60" Grid.Column="5" Text="1" />
 
 			<TextBlock Grid.Row="2" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="1" Text="2维参数" />
 			<TextBlock Grid.Row="2" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="2" Text="2MIN" />
@@ -133,7 +142,7 @@
 				<ComboBoxItem Content="乘"/>
 				<ComboBoxItem Content="除"/>
 			</ComboBox>
-			<TextBox x:Name="fix2num"  VerticalAlignment="Top" HorizontalAlignment="Right"  Grid.Row="3" Height="20" Width ="60" Grid.Column="5" Text="1" Margin="0,0,20,0" />
+			<TextBox x:Name="fix2num"  VerticalAlignment="Top" HorizontalAlignment="Right"  Grid.Row="3" Height="20" Width ="60" Grid.Column="5" Text="1" />
 
 			<TextBlock Grid.Row="4" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="1" Text="3维参数" />
 			<TextBlock Grid.Row="4" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="2" Text="3MIN" />
@@ -151,7 +160,7 @@
 				<ComboBoxItem Content="乘"/>
 				<ComboBoxItem Content="除"/>
 			</ComboBox>
-			<TextBox x:Name="fix3num"  VerticalAlignment="Top" HorizontalAlignment="Right"  Grid.Row="5" Height="20" Width ="60" Grid.Column="5" Text="1" Margin="0,0,20,0" />
+			<TextBox x:Name="fix3num"  VerticalAlignment="Top" HorizontalAlignment="Right"  Grid.Row="5" Height="20" Width ="60" Grid.Column="5" Text="1" />
 
 			<TextBlock Grid.Row="6" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="1" Text="4维参数" />
 			<TextBlock Grid.Row="6" VerticalAlignment="Bottom" Height="20" Width ="100" Grid.Column="2" Text="4MIN" />
@@ -169,13 +178,17 @@
 				<ComboBoxItem Content="乘"/>
 				<ComboBoxItem Content="除"/>
 			</ComboBox>
-			<TextBox x:Name="fix4num"  VerticalAlignment="Top" HorizontalAlignment="Right"  Grid.Row="7" Height="20" Width ="60" Grid.Column="5" Text="1" Margin="0,0,20,0" />
+			<TextBox x:Name="fix4num"  VerticalAlignment="Top" HorizontalAlignment="Right"  Grid.Row="7" Height="20" Width ="60" Grid.Column="5" Text="1" />
 
 			<Button x:Name="clearButton" Grid.Row="8" Click="clearButton_Click" Grid.Column="1" Width="100" Height="30" Content="清除" Margin="5,15,5,15" Background="#007ACC" Foreground="White"/>
 			<Button x:Name="genButton" Grid.Row="8" Click="genButton_Click" Grid.Column="2" Width="100" Height="30" Content="生成" Margin="5,15,5,15" Background="#007ACC" Foreground="White"/>
 			<Button x:Name="importButton" Grid.Row="8" Click="importButton_Click" Grid.Column="3" Width="100" Height="30" Content="导入" Margin="5,15,5,15" Background="#007ACC" Foreground="White"/>
 			<Button x:Name="runButton" Grid.Row="8" Click="runButton_Click" Grid.Column="4" Width="100" Height="30" Content="运行" Margin="5,15,5,15" Background="#007ACC" Foreground="White"/>
 			<Button x:Name="runButton2" Grid.Row="8" Click="runButton_Click_New" Grid.Column="5" Width="100" Height="30" Content="不规则计算" Margin="5,15,5,15" Background="#007ACC" Foreground="White"/>
+			<ListBox x:Name="parameterListBox"  VerticalAlignment="Center" HorizontalAlignment="Left" Height="60" Width="545" Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="6" Margin="5,0,5,0"/>
 		</Grid>
+
+
+
 	</Grid>
 </Page>

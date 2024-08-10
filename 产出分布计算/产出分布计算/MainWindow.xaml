@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		DataContext="{Binding MainViewModel, Source={x:Static Application.Current}}"
-		Title="PIE工具软件V1.1 yao.ma@aucksun.com" Height="443" Width="907" ResizeMode="CanMinimize" Icon="/test2.ico">
+		Title="PIE工具软件V1.1-TEST yao.ma@aucksun.com" Height="443" Width="907" ResizeMode="CanMinimize" Icon="/test2.ico">
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="370*"/>
