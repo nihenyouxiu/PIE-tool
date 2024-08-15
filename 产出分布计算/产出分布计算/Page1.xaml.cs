@@ -1,28 +1,26 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
+using System.Net;
+using System.Data;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Drawing;
 using System.Windows.Input;
 using System.Diagnostics;
-using System;
-using Microsoft.Win32;
-using System.Text.RegularExpressions;
-using OfficeOpenXml;
-using static 产出分布计算.Page1;
-using OfficeOpenXml.ConditionalFormatting;
-using OfficeOpenXml.Style;
-using OfficeOpenXml.Style.Dxf;
+using System.Text.Json;
 using System.Collections.Concurrent;
 using System.IO.MemoryMappedFiles;
 using System.ComponentModel;
 using System.Windows.Shapes;
-using System.Data;
+using System.Text.RegularExpressions;
+using OfficeOpenXml;
+using OfficeOpenXml.ConditionalFormatting;
+using OfficeOpenXml.Style;
+using OfficeOpenXml.Style.Dxf;
 using Newtonsoft.Json;
-using System.Net;
-using System.Text.Json;
-using System.Diagnostics;
+using static 产出分布计算.Page1;
 
 namespace 产出分布计算
 {
@@ -31,6 +29,7 @@ namespace 产出分布计算
     /// </summary>
     public partial class Page1 : Page
     {
+
         private int _progress;
         public int Progress
         {
@@ -123,6 +122,25 @@ namespace 产出分布计算
                 return Chips.Count;
             }
         }
+
+        private void multiLineTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (multiLineTextBox.Text == "请输入片号")
+            {
+                multiLineTextBox.Text = "";
+                multiLineTextBox.Foreground = System.Windows.Media.Brushes.Black;
+            }
+        }
+
+        private void multiLineTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(multiLineTextBox.Text))
+            {
+                multiLineTextBox.Text = "请输入片号";
+                multiLineTextBox.Foreground = System.Windows.Media.Brushes.Gray;
+            }
+        }
+
         private void LoadTextBoxContent()
         {
             try
@@ -131,31 +149,31 @@ namespace 产出分布计算
 
                 TextBoxContent content = JsonConvert.DeserializeObject<TextBoxContent>(json);
 
-                BinName.Text = content.BinName;
-                BinSetting.Text = content.BinSetting;
-                dimensionTextBox.Text = content.Dimension;
-                filePath.Text = content.FilePath;
-                filenameSuffix.Text = content.filenameSuffix;
-                para1.Text = content.Para1;
-                para1min.Text = content.Para1Min;
-                para1rta.Text = content.Para1Rta;
-                para1num.Text = content.Para1Num;
-                fix1num.Text = content.Fix1num;
-                para2.Text = content.Para2;
-                para2min.Text = content.Para2Min;
-                para2rta.Text = content.Para2Rta;
-                para2num.Text = content.Para2Num;
-                fix2num.Text = content.Fix2num;
-                para3.Text = content.Para3;
-                para3min.Text = content.Para3Min;
-                para3rta.Text = content.Para3Rta;
-                para3num.Text = content.Para3Num;
-                fix3num.Text = content.Fix3num;
-                para4.Text = content.Para4;
-                para4min.Text = content.Para4Min;
-                para4rta.Text = content.Para4Rta;
-                para4num.Text = content.Para4Num;
-                fix4num.Text = content.Fix4num;
+                this.BinName.Text = content.BinName;
+                this.BinSetting.Text = content.BinSetting;
+                this.dimensionTextBox.Text = content.Dimension;
+                this.filePath.Text = content.FilePath;
+                this.filenameSuffix.Text = content.filenameSuffix;
+                this.para1.Text = content.Para1;
+                this.para1min.Text = content.Para1Min;
+                this.para1rta.Text = content.Para1Rta;
+                this.para1num.Text = content.Para1Num;
+                this.fix1num.Text = content.Fix1num;
+                this.para2.Text = content.Para2;
+                this.para2min.Text = content.Para2Min;
+                this.para2rta.Text = content.Para2Rta;
+                this.para2num.Text = content.Para2Num;
+                this.fix2num.Text = content.Fix2num;
+                this.para3.Text = content.Para3;
+                this.para3min.Text = content.Para3Min;
+                this.para3rta.Text = content.Para3Rta;
+                this.para3num.Text = content.Para3Num;
+                this.fix3num.Text = content.Fix3num;
+                this.para4.Text = content.Para4;
+                this.para4min.Text = content.Para4Min;
+                this.para4rta.Text = content.Para4Rta;
+                this.para4num.Text = content.Para4Num;
+                this.fix4num.Text = content.Fix4num;
             }
             catch (Exception ex)
             {
@@ -173,35 +191,35 @@ namespace 产出分布计算
             {
                 TextBoxContent content = new TextBoxContent
                 {
-                    BinName = BinName.Text,
-                    BinSetting = BinSetting.Text,
-                    Dimension = dimensionTextBox.Text,
-                    FilePath = filePath.Text,
-                    filenameSuffix = filenameSuffix.Text,
+                    BinName = this.BinName.Text,
+                    BinSetting = this.BinSetting.Text,
+                    Dimension = this.dimensionTextBox.Text,
+                    FilePath = this.filePath.Text,
+                    filenameSuffix = this.filenameSuffix.Text,
 
-                    Para1 = para1.Text,
-                    Para1Min = para1min.Text,
-                    Para1Rta = para1rta.Text,
-                    Para1Num = para1num.Text,
-                    Fix1num = fix1num.Text,
+                    Para1 = this.para1.Text,
+                    Para1Min = this.para1min.Text,
+                    Para1Rta = this.para1rta.Text,
+                    Para1Num = this.para1num.Text,
+                    Fix1num = this.fix1num.Text,
 
-                    Para2 = para2.Text,
-                    Para2Min = para2min.Text,
-                    Para2Rta = para2rta.Text,
-                    Para2Num = para2num.Text,
-                    Fix2num = fix2num.Text,
+                    Para2 = this.para2.Text,
+                    Para2Min = this.para2min.Text,
+                    Para2Rta = this.para2rta.Text,
+                    Para2Num = this.para2num.Text,
+                    Fix2num = this.fix2num.Text,
 
-                    Para3 = para3.Text,
-                    Para3Min = para3min.Text,
-                    Para3Rta = para3rta.Text,
-                    Para3Num = para3num.Text,
-                    Fix3num = fix3num.Text,
+                    Para3 = this.para3.Text,
+                    Para3Min = this.para3min.Text,
+                    Para3Rta = this.para3rta.Text,
+                    Para3Num = this.para3num.Text,
+                    Fix3num = this.fix3num.Text,
 
-                    Para4 = para4.Text,
-                    Para4Min = para4min.Text,
-                    Para4Rta = para4rta.Text,
-                    Para4Num = para4num.Text,
-                    Fix4num = fix4num.Text,
+                    Para4 = this.para4.Text,
+                    Para4Min = this.para4min.Text,
+                    Para4Rta = this.para4rta.Text,
+                    Para4Num = this.para4num.Text,
+                    Fix4num = this.fix4num.Text,
                 };
 
                 string json = JsonConvert.SerializeObject(content, Formatting.Indented);
@@ -323,7 +341,17 @@ namespace 产出分布计算
                 {
                     lock (dictLock)
                     {
-                        waferList.Add(waferData.WaferId, waferData);
+                        // 假设 waferList 是一个 Dictionary<int, WaferData>
+                        if (waferList.ContainsKey(waferData.WaferId))
+                        {
+                            // 如果字典中已经存在该 WaferId，更新数据
+                            waferList[waferData.WaferId] = waferData;
+                        }
+                        else
+                        {
+                            // 如果字典中不存在该 WaferId，添加数据
+                            waferList.Add(waferData.WaferId, waferData);
+                        }
                     }
                 });
 
@@ -444,9 +472,6 @@ namespace 产出分布计算
             }
 
             string outputFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OutputFolder");
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Multiselect = false;
-            openFileDialog.Filter = "TXT files (*.txt)|*.txt|All files (*.*)|*.*";
             string output_excel_file = System.IO.Path.Combine(outputFolder, $"{BinName.Text}.xlsx");
             // 检查文件夹是否存在
             if (!Directory.Exists(outputFolder))
@@ -455,7 +480,7 @@ namespace 产出分布计算
             }
 
             string output_csv_file = System.IO.Path.Combine(outputFolder, "每片颗粒数.csv");
-            string not_find_csv_file = System.IO.Path.Combine(outputFolder, "NotFindFile.csv");
+            string not_find_csv_file = System.IO.Path.Combine(outputFolder, "未找到片号文件.csv");
             try
             {
                 if (File.Exists(output_csv_file))
@@ -484,7 +509,7 @@ namespace 产出分布计算
                 return;
             }
 
-            string filePathText = filePath.Text;
+            string filePathText = this.filePath.Text;
 
             string[] lines = multiLineTextBox.Text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
             int totalLines = lines.Count();
@@ -510,29 +535,27 @@ namespace 产出分布计算
                         progressText.Text = $"{Progress}%";
                     });
                 }));
-
-                await Task.WhenAll(tasks); // 等待所有任务完成
-
-                foreach (var temp in waferList)
-                {
-                    tasks.Add(Task.Run(() =>
-                    {
-                        var wafer = GetWaferById(temp.Key);
-
-                        if (wafer != null)
-                        {
-                            lock (fileWriteLock) // 使用锁保护写入操作
-                            {
-                                using (var sw = new StreamWriter(output_csv_file, true, Encoding.UTF8))
-                                {
-                                    sw.WriteLine(temp.Key + "," + wafer.Chips.Count);
-                                }
-                            }
-                        }
-                    }));
-                }
-                await Task.WhenAll(tasks); // 等待所有任务完成
             }
+
+            await Task.WhenAll(tasks); // 等待所有任务完成
+
+            tasks.Clear(); // 清空任务列表
+
+            foreach (var temp in waferList) 
+            {
+                tasks.Add(Task.Run(() =>
+                {
+                    lock (fileWriteLock) // 使用锁保护写入操作
+                    {
+                        using (var sw = new StreamWriter(output_csv_file, true, Encoding.UTF8))
+                        {
+                            sw.WriteLine(temp.Key + "," + temp.Value.Chips.Count());
+                        }
+                    }
+                }));
+            }
+            await Task.WhenAll(tasks); // 等待所有任务完成
+
             MessageBox.Show("导入文件成功！");
 
             EnableAllButtons();
@@ -619,7 +642,6 @@ namespace 产出分布计算
                 sb.AppendLine("  ],");
             }
 
-            // Remove the trailing comma and newline
             if (sb.Length > 2)
             {
                 sb.Length -= 3;

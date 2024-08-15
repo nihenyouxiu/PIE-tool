@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		DataContext="{Binding MainViewModel, Source={x:Static Application.Current}}"
-		Title="PIE工具软件V1.1-TEST yao.ma@aucksun.com" Height="443" Width="907" ResizeMode="CanMinimize" Icon="/test2.ico">
+		Title="PIE工具软件V2.0 yao.ma@aucksun.com" Height="460" Width="920" ResizeMode="CanMinimize" Icon="/test2.ico">
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="370*"/>
@@ -13,19 +13,19 @@
 		
 		<TabControl Name="MainTabControl" Grid.RowSpan="5">
 			<TabItem Header="产出分布" Width="100" Height="20" >
-				<Frame Name="FramePage1" NavigationUIVisibility="Hidden" Loaded="FramePage1_Loaded" Margin="1,0,0,0"/>
-			</TabItem>
-			<TabItem Header="参数修改" Width="100" Height="20" >
-				<Frame Name="FramePage3"  NavigationUIVisibility="Hidden" Loaded="FramePage3_Loaded" Margin="1,0,0,0"/>
+				<Frame Name="FramePage1" NavigationUIVisibility="Hidden" Loaded="FramePage1_Loaded" Margin="0,0,0,0"/>
 			</TabItem>
 			<TabItem Header="落bin率计算" Width="100" Height="20" >
-				<Frame Name="FramePage2" NavigationUIVisibility="Hidden" Loaded="FramePage2_Loaded" Margin="1,0,0,0"/>
+				<Frame Name="FramePage2" NavigationUIVisibility="Hidden" Loaded="FramePage2_Loaded" Margin="0,0,0,0"/>
+			</TabItem>
+			<TabItem Header="参数修改" Width="100" Height="20" >
+				<Frame Name="FramePage3"  NavigationUIVisibility="Hidden" Loaded="FramePage3_Loaded" Margin="0,0,0,0"/>
 			</TabItem>
 			<TabItem Header="DVF计算" Width="100" Height="20" >
-				<Frame Name="FramePage4" NavigationUIVisibility="Hidden" Loaded="FramePage4_Loaded" Margin="1,0,0,0"/>
+				<Frame Name="FramePage4" NavigationUIVisibility="Hidden" Loaded="FramePage4_Loaded" Margin="0,0,0,0"/>
 			</TabItem>
 			<TabItem Header="矩阵芯粒计算" Width="100" Height="20" >
-				<Frame Name="FramePage5" NavigationUIVisibility="Hidden" Loaded="FramePage5_Loaded" Margin="1,0,0,0"/>
+				<Frame Name="FramePage5" NavigationUIVisibility="Hidden" Loaded="FramePage5_Loaded" Margin="0,0,0,0"/>
 			</TabItem>
 		</TabControl>
 	</Grid>

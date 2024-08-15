@@ -7,33 +7,108 @@
       mc:Ignorable="d" 
       d:DesignHeight="400" d:DesignWidth="900"
       Title="落Bin率计算">
-
+	
 	<Grid>
 		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="430"/>
-			<ColumnDefinition Width="*"/>
+			<ColumnDefinition Width="330"/>
+			<ColumnDefinition/>
 		</Grid.ColumnDefinitions>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="30"/>
-			<RowDefinition Height="180"/>
+			<RowDefinition Height="150"/>
+			<RowDefinition Height="150"/>
 			<RowDefinition Height="*"/>
 		</Grid.RowDefinitions>
 
 		<!-- 修正参数的文本框 -->
-		<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Width="400">
-			<TextBlock Text="LOP1修正：" VerticalAlignment="Center"/>
-			<TextBox x:Name="lop1TextBox" Width="50" Margin="5" VerticalAlignment="Center" Text="1"/>
-			<TextBlock Text="VF1修正：" VerticalAlignment="Center"/>
-			<TextBox x:Name="vf1TextBox" Width="50" Margin="5" VerticalAlignment="Center" Text="1"/>
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Width="400" Grid.ColumnSpan="2" Height="26">
+			<Label Content="文件路径" HorizontalContentAlignment="left" Width="80"/>
+			<TextBox x:Name="filePath" Text="\\192.168.3.84\aoi\Resorting" Width="236" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Height="20"/>
 		</StackPanel>
+
+		<StackPanel Orientation="Horizontal" Height="30" Grid.Row="1" VerticalAlignment="Top">
+			<Label Content="文件名后缀" HorizontalContentAlignment="left" Width="80"/>
+			<TextBox x:Name="filenameSuffix" Text="-F" Width="100"  HorizontalContentAlignment="Left" Height="20" Margin="0,0,0,0"/>
+
+			<CheckBox  Content="调试" Name="CheckBoxDebug" Margin="10,0,0,0"  HorizontalContentAlignment="Left" VerticalAlignment="Center"/>
+
+		</StackPanel>
+
+		<StackPanel Orientation="Horizontal" Height="200" Width ="300" Grid.RowSpan="2" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,40,0,0" >
+			<TextBox x:Name="multiLineTextBox" 
+				 AcceptsReturn="True" 
+				 AcceptsTab="True" 
+				 VerticalScrollBarVisibility="Visible" 
+				 HorizontalScrollBarVisibility="Auto"
+				 TextWrapping="Wrap"
+				 HorizontalContentAlignment="left" 
+				 Height="200" Width="300"          
+				 Text="请输入片号"
+				 Foreground="Gray"
+				 GotFocus="multiLineTextBox_GotFocus" 
+				 LostFocus="multiLineTextBox_LostFocus"  >
+			</TextBox>
+		</StackPanel>
+
+		<StackPanel  Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2" Height="30" Width="330" Margin="0,90,0,0">
+			<Grid>
+				<!-- 进度条 -->
+				<ProgressBar x:Name="progressBar" 
+					 HorizontalAlignment="Center" 
+					 VerticalAlignment="Center"
+					 Width="300" Height="30" 
+					 Minimum="0" Maximum="100" 
+					 BorderThickness="1" BorderBrush="#2196F3"
+					 Background="#E0E0E0"
+					 Foreground="#2196F3">
+					<ProgressBar.Resources>
+						<Style TargetType="TextBlock">
+							<Setter Property="Foreground" Value="#2196F3"/>
+						</Style>
+					</ProgressBar.Resources>
+				</ProgressBar>
+
+				<!-- 进度文本 -->
+				<TextBlock x:Name="progressText" 
+					   HorizontalAlignment="Center" 
+					   VerticalAlignment="Center" 
+					   Foreground="black" FontWeight="Bold" 
+					   FontSize="16" 
+					   Text="{Binding Path=Value, ElementName=progressBar, StringFormat={}{0}%}">
+				</TextBlock>
+			</Grid>
+		</StackPanel>
+
 		<!-- 按钮 -->
-		<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="1" Width="350">
-			<Button Content="Bin表导入" Click="BinImport_Click" Margin="5" Width="100" Background="#007ACC" Foreground="White"/>
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="3" Grid.Column="0" Width="330" Height="40">
+			<Button Content="Bin表导入" Click="BinImport_Click" Margin="5" Width="100"  Background="#007ACC" Foreground="White"/>
 			<Button Content="载入文件" Click="LoadFile_Click" Margin="5" Width="100" Background="#007ACC" Foreground="White"/>
 			<Button Content="导出文件" Click="ExportToExcel_Click" Margin="5" Width="100" Background="#007ACC" Foreground="White"/>
 		</StackPanel>
-		<ListBox x:Name="binDataListBox" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="1" Height="160" Width="845" Grid.ColumnSpan="2" >
-		</ListBox>
-		<ListBox x:Name="parameterListBox" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="2" Height="160" Width="845" Grid.ColumnSpan="2" />
+
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Width="500" Height="200" >
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="30"/>
+					<RowDefinition Height="155"/>
+				</Grid.RowDefinitions>
+			<Label Content="BIN表信息：" HorizontalContentAlignment="left" Grid.Row="0" />
+				<ListBox x:Name="binDataListBox" VerticalAlignment="Top"  HorizontalAlignment="Center" Height="140" Width="500"  Grid.Row="1" />
+			</Grid>
+		</StackPanel>
+
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Grid.Row="2" Grid.Column="2" Grid.RowSpan="2" Width="500" Height="200" Margin="10">
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="30"/>
+					<RowDefinition Height="190"/>
+				</Grid.RowDefinitions>
+				
+				<Label Content="运行信息：" HorizontalContentAlignment="left" Grid.Row="0" Height="30" />
+				<ListBox x:Name="parameterListBox" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="1"  Grid.RowSpan="2" Height="130" Width="500"  />
+			</Grid>
+		</StackPanel>
+
+
 	</Grid>
 </Page>

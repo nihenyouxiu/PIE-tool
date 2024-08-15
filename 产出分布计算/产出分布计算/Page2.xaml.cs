@@ -5,6 +5,7 @@ using System.IO;
 using System.Windows;
 using Microsoft.Win32;
 using System.Windows.Controls;
+
 using System.Linq;
 using System.Text;
 using OfficeOpenXml;
@@ -17,7 +18,8 @@ using OfficeOpenXml.DataValidation;
 using System.Windows.Shapes;
 using System.Drawing.Drawing2D;
 using System.Text.RegularExpressions;
-using System.Threading; // 添加多线程支持
+using System.Threading;
+using System.Data; // 添加多线程支持
 
 namespace 产出分布计算
 {
@@ -136,8 +138,31 @@ namespace 产出分布计算
         }
     }
 
+    public class Wafer
+    {
+        public string WaferId { get; set; }
+        public List<Chip> Chips { get; set; }
+
+        public Wafer(string waferId)
+        {
+            WaferId = waferId;
+            Chips = new List<Chip>();
+        }
+
+        public void AddChip(Chip chip)
+        {
+            Chips.Add(chip);
+        }
+
+        public int GetChipCount()
+        {
+            return Chips.Count;
+        }
+    }
+
     public class Chip
     {
+        public string waferid { get; set; }
         public double TEST { get; set; }
         public double BIN { get; set; }
         public double VF1 { get; set; }
@@ -197,6 +222,30 @@ namespace 产出分布计算
     }
     public partial class Page2 : Page
     {
+        private object dictLock = new object(); // 定义字典的锁对象
+
+        private Dictionary<string, Wafer> waferList = new Dictionary<string, Wafer>();
+
+        private readonly object fileWriteLock = new object(); // 用于保护文件写入操作的锁对象
+
+        private int _progress;
+
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged(string name)
+        {
+            PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(name));
+        }
+
+        public int Progress
+        {
+            get { return _progress; }
+            set
+            {
+                _progress = value;
+                OnPropertyChanged("Progress");
+            }
+        }
+
         List<BinData> binDataList;
         private readonly object binDataLock = new object(); // 添加锁对象用于保护binDataList
         private readonly object lockObject = new object();
@@ -323,6 +372,203 @@ namespace 产出分布计算
             ((chip.IR1 == -1000000) || (binData.IR1Min == binData.IR1Max) || (chip.IR1 >= binData.IR1Min && chip.IR1 < binData.IR1Max)) &&
             ((chip.IR2 == -1000000) || (binData.IR2Min == binData.IR2Max) || (chip.IR2 >= binData.IR2Min && chip.IR2 < binData.IR2Max)) && true;
         }
+
+        public bool ValidateAgainstBinDataDebug(Chip chip, BinData binData, out List<string> failReason)
+        {
+            failReason = new List<string>();  // 初始化为 List<string>
+            bool result = true;
+
+            if (chip.VF1 != -1000000 && binData.VF1Min != binData.VF1Max && (chip.VF1 < binData.VF1Min || chip.VF1 >= binData.VF1Max))
+            {
+                failReason.Add("VF1");  // 添加失败原因到列表
+                result = false;
+            }
+            if (chip.VF2 != -1000000 && binData.VF2Min != binData.VF2Max && (chip.VF2 < binData.VF2Min || chip.VF2 >= binData.VF2Max))
+            {
+                failReason.Add("VF2");
+                result = false;
+            }
+            if (chip.VF3 != -1000000 && binData.VF3Min != binData.VF3Max && (chip.VF3 < binData.VF3Min || chip.VF3 >= binData.VF3Max))
+            {
+                failReason.Add("VF3");
+                result = false;
+            }
+            if (chip.VF4 != -1000000 && binData.VF4Min != binData.VF4Max && (chip.VF4 < binData.VF4Min || chip.VF4 >= binData.VF4Max))
+            {
+                failReason.Add("VF4");
+                result = false;
+            }
+            if (chip.VF5 != -1000000 && binData.VF5Min != binData.VF5Max && (chip.VF5 < binData.VF5Min || chip.VF5 >= binData.VF5Max))
+            {
+                failReason.Add("VF5");
+                result = false;
+            }
+            if (chip.VF6 != -1000000 && binData.VF6Min != binData.VF6Max && (chip.VF6 < binData.VF6Min || chip.VF6 >= binData.VF6Max))
+            {
+                failReason.Add("VF6");
+                result = false;
+            }
+            if (chip.DVF != -1000000 && binData.DVFMin != binData.DVFMax && (chip.DVF < binData.DVFMin || chip.DVF >= binData.DVFMax))
+            {
+                failReason.Add("DVF");
+                result = false;
+            }
+            if (chip.VFD != -1000000 && binData.VFDMin != binData.VFDMax && (chip.VFD < binData.VFDMin || chip.VFD >= binData.VFDMax))
+            {
+                failReason.Add("VFD");
+                result = false;
+            }
+            if (chip.VZ1 != -1000000 && binData.VZ1Min != binData.VZ1Max && (chip.VZ1 < binData.VZ1Min || chip.VZ1 >= binData.VZ1Max))
+            {
+                failReason.Add("VZ1");
+                result = false;
+            }
+            if (chip.VZ2 != -1000000 && binData.VZ2Min != binData.VZ2Max && (chip.VZ2 < binData.VZ2Min || chip.VZ2 >= binData.VZ2Max))
+            {
+                failReason.Add("VZ2");
+                result = false;
+            }
+            if (chip.IR != -1000000 && binData.IRMin != binData.IRMax && (chip.IR < binData.IRMin || chip.IR >= binData.IRMax))
+            {
+                failReason.Add("IR");
+                result = false;
+            }
+            if (chip.LOP1 != -1000000 && binData.LOP1Min != binData.LOP1Max && (chip.LOP1 < binData.LOP1Min || chip.LOP1 >= binData.LOP1Max))
+            {
+                failReason.Add("LOP1");
+                result = false;
+            }
+            if (chip.LOP2 != -1000000 && binData.LOP2Min != binData.LOP2Max && (chip.LOP2 < binData.LOP2Min || chip.LOP2 >= binData.LOP2Max))
+            {
+                failReason.Add("LOP2");
+                result = false;
+            }
+            if (chip.WLP1 != -1000000 && binData.WLP1Min != binData.WLP1Max && (chip.WLP1 < binData.WLP1Min || chip.WLP1 >= binData.WLP1Max))
+            {
+                failReason.Add("WLP1");
+                result = false;
+            }
+            if (chip.WLD1 != -1000000 && binData.WLD1Min != binData.WLD1Max && (chip.WLD1 < binData.WLD1Min || chip.WLD1 >= binData.WLD1Max))
+            {
+                failReason.Add("WLD1");
+                result = false;
+            }
+            if (chip.WLC1 != -1000000 && binData.WLC1Min != binData.WLC1Max && (chip.WLC1 < binData.WLC1Min || chip.WLC1 >= binData.WLC1Max))
+            {
+                failReason.Add("WLC1");
+                result = false;
+            }
+            if (chip.HW1 != -1000000 && binData.HW1Min != binData.HW1Max && (chip.HW1 < binData.HW1Min || chip.HW1 >= binData.HW1Max))
+            {
+                failReason.Add("HW1");
+                result = false;
+            }
+            if (chip.WLP2 != -1000000 && binData.WLP2Min != binData.WLP2Max && (chip.WLP2 < binData.WLP2Min || chip.WLP2 >= binData.WLP2Max))
+            {
+                failReason.Add("WLP2");
+                result = false;
+            }
+            if (chip.WLD2 != -1000000 && binData.WLD2Min != binData.WLD2Max && (chip.WLD2 < binData.WLD2Min || chip.WLD2 >= binData.WLD2Max))
+            {
+                failReason.Add("WLD2");
+                result = false;
+            }
+            if (chip.WLC2 != -1000000 && binData.WLC2Min != binData.WLC2Max && (chip.WLC2 < binData.WLC2Min || chip.WLC2 >= binData.WLC2Max))
+            {
+                failReason.Add("WLC2");
+                result = false;
+            }
+            if (chip.HW2 != -1000000 && binData.HW2Min != binData.HW2Max && (chip.HW2 < binData.HW2Min || chip.HW2 >= binData.HW2Max))
+            {
+                failReason.Add("HW2");
+                result = false;
+            }
+            if (chip.DVF1 != -1000000 && binData.DVF1Min != binData.DVF1Max && (chip.DVF1 < binData.DVF1Min || chip.DVF1 >= binData.DVF1Max))
+            {
+                failReason.Add("DVF1");
+                result = false;
+            }
+            if (chip.DVF2 != -1000000 && binData.DVF2Min != binData.DVF2Max && (chip.DVF2 < binData.DVF2Min || chip.DVF2 >= binData.DVF2Max))
+            {
+                failReason.Add("DVF2");
+                result = false;
+            }
+            if (chip.VF7 != -1000000 && binData.VF7Min != binData.VF7Max && (chip.VF7 < binData.VF7Min || chip.VF7 >= binData.VF7Max))
+            {
+                failReason.Add("VF7");
+                result = false;
+            }
+            if (chip.VF8 != -1000000 && binData.VF8Min != binData.VF8Max && (chip.VF8 < binData.VF8Min || chip.VF8 >= binData.VF8Max))
+            {
+                failReason.Add("VF8");
+                result = false;
+            }
+            if (chip.IR3 != -1000000 && binData.IR3Min != binData.IR3Max && (chip.IR3 < binData.IR3Min || chip.IR3 >= binData.IR3Max))
+            {
+                failReason.Add("IR3");
+                result = false;
+            }
+            if (chip.IR4 != -1000000 && binData.IR4Min != binData.IR4Max && (chip.IR4 < binData.IR4Min || chip.IR4 >= binData.IR4Max))
+            {
+                failReason.Add("IR4");
+                result = false;
+            }
+            if (chip.IR5 != -1000000 && binData.IR5Min != binData.IR5Max && (chip.IR5 < binData.IR5Min || chip.IR5 >= binData.IR5Max))
+            {
+                failReason.Add("IR5");
+                result = false;
+            }
+            if (chip.IR6 != -1000000 && binData.IR6Min != binData.IR6Max && (chip.IR6 < binData.IR6Min || chip.IR6 >= binData.IR6Max))
+            {
+                failReason.Add("IR6");
+                result = false;
+            }
+            if (chip.VZ3 != -1000000 && binData.VZ3Min != binData.VZ3Max && (chip.VZ3 < binData.VZ3Min || chip.VZ3 >= binData.VZ3Max))
+            {
+                failReason.Add("VZ3");
+                result = false;
+            }
+            if (chip.VZ4 != -1000000 && binData.VZ4Min != binData.VZ4Max && (chip.VZ4 < binData.VZ4Min || chip.VZ4 >= binData.VZ4Max))
+            {
+                failReason.Add("VZ4");
+                result = false;
+            }
+            if (chip.VZ5 != -1000000 && binData.VZ5Min != binData.VZ5Max && (chip.VZ5 < binData.VZ5Min || chip.VZ5 >= binData.VZ5Max))
+            {
+                failReason.Add("VZ5");
+                result = false;
+            }
+            if (chip.IF != -1000000 && binData.IFMin != binData.IFMax && (chip.IF < binData.IFMin || chip.IF >= binData.IFMax))
+            {
+                failReason.Add("IF");
+                result = false;
+            }
+            if (chip.IF1 != -1000000 && binData.IF1Min != binData.IF1Max && (chip.IF1 < binData.IF1Min || chip.IF1 >= binData.IF1Max))
+            {
+                failReason.Add("IF1");
+                result = false;
+            }
+            if (chip.IF2 != -1000000 && binData.IF2Min != binData.IF2Max && (chip.IF2 < binData.IF2Min || chip.IF2 >= binData.IF2Max))
+            {
+                failReason.Add("IF2");
+                result = false;
+            }
+            if (chip.IR1 != -1000000 && binData.IR1Min != binData.IR1Max && (chip.IR1 < binData.IR1Min || chip.IR1 >= binData.IR1Max))
+            {
+                failReason.Add("IR1");
+                result = false;
+            }
+            if (chip.IR2 != -1000000 && binData.IR2Min != binData.IR2Max && (chip.IR2 < binData.IR2Min || chip.IR2 >= binData.IR2Max))
+            {
+                failReason.Add("IR2");
+                result = false;
+            }
+
+            // 如果所有条件都通过，返回 true
+            return result;
+        }
+
+
         void getMaxMin()
         {
             if (binDataList.Any())
@@ -567,8 +813,6 @@ namespace 产出分布计算
                         }
                         getMaxMin();
                         binDatafail.binIdx = 999;
-                        binDataList.Add(binDatafail);
-
                     }
                 }
                 catch (IOException)
@@ -577,7 +821,7 @@ namespace 产出分布计算
                     return;
                 }
 
-                binDataListBox.ItemsSource = binDataList;
+                this.binDataListBox.ItemsSource = binDataList;
                 MessageBox.Show("Bin表文件导入成功，请载入片号文件！");
 
             }
@@ -654,6 +898,20 @@ namespace 产出分布计算
                 worksheet.Cells[row, 9].Style.Numberformat.Format = "0.00%";
                 row++;
             }
+
+            worksheet.Cells[row, 1].Value = binDatafail.binIdx;
+            worksheet.Cells[row, 2].Value = $"[{binDatafail.WLD1Min} , {binDatafail.WLD1Max})";
+            worksheet.Cells[row, 3].Value = $"[{binDatafail.WLP1Min} , {binDatafail.WLP1Max})";
+            worksheet.Cells[row, 4].Value = $"[{binDatafail.LOP1Min} , {binDatafail.LOP1Max})";
+            worksheet.Cells[row, 5].Value = $"[{binDatafail.VF1Min} , {binDatafail.VF1Max})";
+            worksheet.Cells[row, 6].Value = $"[{binDatafail.VF2Min} , {binDatafail.VF2Max})";
+            worksheet.Cells[row, 7].Value = $"[{binDatafail.VF3Min} , {binDatafail.VF3Max})";
+            worksheet.Cells[row, 8].Value = binDatafail.chipNum;
+            worksheet.Cells[row, 9].Value = (double)binDatafail.chipNum / totalChipNum;
+            // 将第九列的格式更改为数字
+            worksheet.Cells[row, 9].Style.Numberformat.Format = "0.00%";
+            row++;
+
             worksheet.Cells[row, 1].Value = "total";
             worksheet.Cells[row, 8].Value = totalChipNum - binDatafail.chipNum;
 
@@ -717,9 +975,9 @@ namespace 产出分布计算
         BinData binDatafail = new BinData();
         double totalChipNum = 0;
         bool breakFlag = false;
-        private async void ProcessFile(string filename, string outputCsvFile, double vf1fixNum, double lop1fixNum)
+        private async void ProcessFile(string filename, string outputCsvFile,string notfindfilename)
         {
-            List<Chip> chipList = new List<Chip>();
+            Wafer waferData = new Wafer(System.IO.Path.GetFileNameWithoutExtension(filename));
             int flag = 0;
             try
             {
@@ -740,9 +998,10 @@ namespace 产出分布计算
                         if (isFirstValueAllDigits && values.Length >= 56)
                         {
                             Chip chipData = new Chip();
+                            chipData.waferid = System.IO.Path.GetFileNameWithoutExtension(filename);
                             chipData.TEST = !string.IsNullOrEmpty(values[0]) ? Convert.ToDouble(values[0]) : -100000;
                             chipData.BIN = !string.IsNullOrEmpty(values[1]) ? 999 : -100000;
-                            chipData.VF1 = !string.IsNullOrEmpty(values[2 + flag]) ? Convert.ToDouble(values[2 + flag]) * vf1fixNum : -100000;
+                            chipData.VF1 = !string.IsNullOrEmpty(values[2 + flag]) ? Convert.ToDouble(values[2 + flag])  : -100000;
                             chipData.VF2 = !string.IsNullOrEmpty(values[3 + flag]) ? Convert.ToDouble(values[3 + flag]) : -100000;
                             chipData.VF3 = !string.IsNullOrEmpty(values[4 + flag]) ? Convert.ToDouble(values[4 + flag]) : -100000;
                             chipData.VF4 = !string.IsNullOrEmpty(values[5 + flag]) ? Convert.ToDouble(values[5 + flag]) : -100000;
@@ -752,7 +1011,7 @@ namespace 产出分布计算
                             chipData.VZ1 = !string.IsNullOrEmpty(values[11 + flag]) ? Convert.ToDouble(values[11 + flag]) : -100000;
                             chipData.VZ2 = !string.IsNullOrEmpty(values[12 + flag]) ? Convert.ToDouble(values[12 + flag]) : -100000;
                             chipData.IR = !string.IsNullOrEmpty(values[13 + flag]) ? Convert.ToDouble(values[13 + flag]) : -100000;
-                            chipData.LOP1 = !string.IsNullOrEmpty(values[14+flag]) ? Convert.ToDouble(values[14+flag]) * lop1fixNum : -100000;
+                            chipData.LOP1 = !string.IsNullOrEmpty(values[14+flag]) ? Convert.ToDouble(values[14+flag])  : -100000;
                             chipData.LOP2 = !string.IsNullOrEmpty(values[15+flag]) ? Convert.ToDouble(values[15+flag]) : -100000;
                             chipData.LOP3 = !string.IsNullOrEmpty(values[16+flag]) ? Convert.ToDouble(values[16+flag]) : -100000;
                             chipData.WLP1 = !string.IsNullOrEmpty(values[17+flag]) ? Convert.ToDouble(values[17+flag]) : -100000;
@@ -781,94 +1040,88 @@ namespace 产出分布计算
                             chipData.DVF = !string.IsNullOrEmpty(values[8 + flag]) ? Convert.ToDouble(values[8 + flag]) : -100000;
                             chipData.DVF1 = !string.IsNullOrEmpty(values[32 + flag]) ? Convert.ToDouble(values[32 + flag]) : -100000;
                             chipData.DVF2 = !string.IsNullOrEmpty(values[33 + flag]) ? Convert.ToDouble(values[33 + flag]) : -100000;
-                            chipList.Add(chipData);
+                            
+                            lock (lockObject)
+                            {
+                                waferData.Chips.Add(chipData);
+                            }
                         }
                     }
                 }
-            }
-            catch (IOException)
-            {
+
+                await Task.Run(() =>
+                {
+                    lock (dictLock)
+                    {
+                        if (waferList.ContainsKey(waferData.WaferId))
+                        {
+                            // 如果字典中已经存在该 WaferId，更新数据
+                            waferList[waferData.WaferId] = waferData;
+                        }
+                        else
+                        {
+                            // 如果字典中不存在该 WaferId，添加数据
+                            waferList.Add(waferData.WaferId, waferData);
+                        }
+                    }
+                });
+
                 await Dispatcher.InvokeAsync(() =>
                 {
-                    MessageBox.Show($"文件 {filename} 已被打开，请关闭后重新选择!", "文件已打开", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                    lock (parameterlockObject)
+                    {
+                        parameterListBox.Items.Add(System.IO.Path.GetFileName(filename) + " 导入完成!");
+                        // 滚动到最新项
+                        parameterListBox.ScrollIntoView(parameterListBox.Items[parameterListBox.Items.Count - 1]);
+                    }
+                });
+
+                await Task.Run(() =>
+                {
+                    lock (lockObject)
+                    {
+                        using (StreamWriter sw = new StreamWriter(outputCsvFile, true, Encoding.UTF8))
+                        {
+                            sw.WriteLineAsync(waferData.WaferId + "," + waferData.Chips.Count());
+                        }
+                    }
+                });
+            }
+
+            catch (IOException)
+            {
+                //MessageBox.Show($"读取文件时出错: {ex.Message}\n{ex.StackTrace}");
+                await Task.Run(() =>
+                {
+                    lock (lockObject)
+                    {
+                        using (StreamWriter sw = new StreamWriter(notfindfilename, true, Encoding.UTF8))
+                        {
+                            sw.WriteLineAsync(filename);
+                        }
+                    }
                 });
                 return;
             }
-
-            BinData binDataFailTmp = binDataList.FirstOrDefault(item => item.binIdx == 999);
-            int waferidchipnum = 0;
-            if (chipList.Any())
-            {
-                foreach (Chip chip in chipList)
-                {
-                    bool flag1 = false;
-
-                    foreach (BinData binDataTmp in binDataList)
-                    {
-                        if (ValidateAgainstBinData(chip, binDataTmp))
-                        {
-                            lock (binDataTmp.Lock)
-                            {
-                                binDataTmp.chipNum++;
-                                chip.BIN = binDataTmp.binIdx;
-                            }
-                            flag1 = true;
-                            break;
-                        }
-                    }
-
-                    if (!flag1)
-                    {
-                        lock (binDataFailTmp?.Lock)
-                        {
-                            if (binDataFailTmp != null)
-                            {
-                                binDataFailTmp.chipNum++;
-                            }
-                        }
-                    }
-
-                    lock (lockObject)
-                    {
-                        totalChipNum++;
-                    }
-                    waferidchipnum++;
-                }
-
-                chipList.Clear();
-            }
-            else
-            {
-                await Dispatcher.InvokeAsync(() =>
-                {
-                    breakFlag = true;
-                    MessageBox.Show("输入文件有误，请重新输入！");
-                });
-            }
-
-            await Task.Run(() =>
-            {
-                lock (lockObject)
-                {
-                    using (StreamWriter sw = new StreamWriter(outputCsvFile, true, Encoding.UTF8))
-                    {
-                        sw.WriteLineAsync(System.IO.Path.GetFileNameWithoutExtension(filename) + "," + waferidchipnum.ToString());
-                    }
-                }
-            });
-
-            await Dispatcher.InvokeAsync(() =>
-            {
-                lock (parameterlockObject)
-                {
-                    parameterListBox.Items.Add(filename + " 计算完成!");
-                    // 滚动到最新项
-                    parameterListBox.ScrollIntoView(parameterListBox.Items[parameterListBox.Items.Count - 1]);
-                }
-            });
         }
 
+        private void multiLineTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (multiLineTextBox.Text == "请输入片号")
+            {
+                multiLineTextBox.Text = "";
+                multiLineTextBox.Foreground = System.Windows.Media.Brushes.Black;
+            }
+        }
 
+        private void multiLineTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(multiLineTextBox.Text))
+            {
+                multiLineTextBox.Text = "请输入片号";
+                multiLineTextBox.Foreground = System.Windows.Media.Brushes.Gray;
+            }
+        }
 
         void initalBinList(List<BinData> binDataList)
         {
@@ -880,82 +1133,177 @@ namespace 产出分布计算
 
         private async void LoadFile_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Multiselect = true;
-            double vf1fixNum = 1;
-            double lop1fixNum = 1;
-            openFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
-            vf1fixNum = Convert.ToDouble(vf1TextBox.Text);
-            lop1fixNum = Convert.ToDouble(lop1TextBox.Text);
+            bool? isChecked = this.CheckBoxDebug.IsChecked ?? false;
+            binDatafail.chipNum = 0;
             string outputFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OutputFolder");
             // 检查文件夹是否存在
-            if (Directory.Exists(outputFolder))
+            if (!Directory.Exists(outputFolder))
             {
-                // 尝试获取文件夹中的所有文件
-                string[] files = Directory.GetFiles(outputFolder);
+                Directory.CreateDirectory(outputFolder);
+            }
+            string output_csv_file = System.IO.Path.Combine(outputFolder, "每片颗粒数.csv");
+            string not_find_csv_file = System.IO.Path.Combine(outputFolder, "未找到片号文件.csv");
 
-                // 遍历文件夹中的所有文件
-                foreach (string file in files)
+            try
+            {
+                if (File.Exists(output_csv_file))
                 {
-                    try
-                    {
-                        // 尝试打开文件，如果文件已经被打开会引发 IOException 异常
-                        using (FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.None))
-                        {
-                            // 文件未被打开，继续处理
-                        }
-                    }
-                    catch (IOException)
-                    {
-                        // 文件被打开，弹出提示框显示
-                        MessageBox.Show($"文件 {file} 已被打开，请关闭后重新尝试删除文件夹。", "文件已打开", MessageBoxButton.OK, MessageBoxImage.Exclamation);
-                        return; // 终止方法的执行，不继续删除文件夹
-                    }
+                    File.Delete(output_csv_file);
                 }
-
-                // 删除文件夹及其内容
-                Directory.Delete(outputFolder, true);
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show($"Error deleting file {output_csv_file}: {ex.Message}");
+                return;
             }
 
-            // 创建文件夹
-            Directory.CreateDirectory(outputFolder);
-            string output_csv_file = System.IO.Path.Combine(outputFolder, "out.csv");
+            try
+            {
+                if (File.Exists(not_find_csv_file))
+                {
+                    File.Delete(not_find_csv_file);
+                }
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show($"Error deleting file {not_find_csv_file}: {ex.Message}");
+                return;
+            }
+
+
             using (StreamWriter sw = new StreamWriter(output_csv_file, true, Encoding.UTF8))
             {
-                sw.WriteLine("waferid,chipNum");
+                sw.WriteLine("片号,颗粒数");
             }
+
             initalBinList(binDataList);
             totalChipNum = 0;
-            if (openFileDialog.ShowDialog() == true)
+
+            DateTime startTime = DateTime.Now; // 记录开始时间
+
+            List<Task> tasks = new List<Task>(); // 声明 tasks 列表
+
+            string[] lines = this.multiLineTextBox.Text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+            int totalLines = lines.Count();
+            Progress = 0;
+
+            progressBar.Value = 0;
+            int processedLines = 0;
+            string fileSuffix = this.filenameSuffix.Text;
+            string filePathText = this.filePath.Text;
+
+            // 逐行读取并处理
+            foreach (string line in lines)
             {
-                DateTime startTime = DateTime.Now; // 记录开始时间
+                string filePathTemp = System.IO.Path.Combine(filePathText, line + fileSuffix + ".csv");
 
-                List<Task> tasks = new List<Task>(); // 声明 tasks 列表
-
-
-                // 尝试打开文件，如果文件已经被打开会引发 IOException 异常
-                foreach (string filename in openFileDialog.FileNames)
+                //string output_csv_file = System.IO.Path.Combine(outputFolder, System.IO.Path.GetFileName(filename));
+                tasks.Add(Task.Run(() =>
                 {
-                    //string output_csv_file = System.IO.Path.Combine(outputFolder, System.IO.Path.GetFileName(filename));
-                    tasks.Add(Task.Run(() => ProcessFile(filename, output_csv_file, vf1fixNum, lop1fixNum))); // 使用多线程处理文件
-                    if (breakFlag)
+                    ProcessFile(filePathTemp, output_csv_file, not_find_csv_file);
+                    processedLines++;
+                    Progress = (int)Math.Ceiling(processedLines * 100.0 / totalLines);
+                    Dispatcher.Invoke(() =>
                     {
-                        break;
+                        progressBar.Value = Progress;
+                        progressText.Text = $"{Progress}%";
+                    });
+                }));
+
+              
+                if (breakFlag)
+                {
+                    break;
+                }
+            }
+
+            await Task.WhenAll(tasks); // 等待所有任务完成
+            tasks.Clear();
+
+            Dictionary<string, double> BinfailReason = new Dictionary<string, double>();
+            string debug_csv_file = System.IO.Path.Combine(outputFolder, "NG颗粒异常原因占比.csv");
+
+            try
+            {
+                if (File.Exists(debug_csv_file))
+                {
+                    File.Delete(debug_csv_file);
+                }
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show($"Error deleting file {debug_csv_file}: {ex.Message}");
+                return;
+            }
+
+            foreach (var temp in waferList)
+            {
+                Wafer waferData = temp.Value;
+
+                foreach (Chip chip in waferData.Chips)
+                {
+                    bool flagChipBin = false;
+                    foreach (BinData binDataTmp in binDataList)
+                    {
+                        if (ValidateAgainstBinData(chip, binDataTmp))
+                        {
+                            binDataTmp.chipNum++;
+                            chip.BIN = binDataTmp.binIdx;
+                            flagChipBin = true;
+                            break;
+                        }
+                    }
+
+                    if (!flagChipBin)
+                    {
+                        if (isChecked == true)
+                        {
+
+                            foreach (var bintemp in binDataList)
+                            {
+                                List<string> failReasons;
+                                ValidateAgainstBinDataDebug(chip, bintemp, out failReasons);
+
+                                foreach (var Reason in failReasons)
+                                {
+                                    if (BinfailReason.ContainsKey(Reason))
+                                    {
+                                        BinfailReason[Reason]++;
+                                    }
+                                    else
+                                    {
+                                        BinfailReason.Add(Reason, 1);
+                                    }
+
+                                }
+                            }
+                        }
+                        binDatafail.chipNum++;
                     }
                 }
-                await Task.WhenAll(tasks); // 等待所有任务完成
-
-                if (!breakFlag)
-                {
-                    DateTime endTime = DateTime.Now; // 记录结束时间
-                    TimeSpan totalTime = endTime - startTime; // 计算运行时间
-                    MessageBox.Show($"文件导入成功！总共耗时：{totalTime.TotalSeconds} 秒");
-                }
-
+                totalChipNum += waferData.Chips.Count();
             }
-            else
+
+            if (isChecked == true)
             {
-                MessageBox.Show("请输入文件！");
+                // 使用 OrderByDescending 对 BinfailReason 按 Value 值进行降序排列
+                foreach (var item in BinfailReason.OrderByDescending(x => x.Value))
+                {
+                    using (StreamWriter sw = new StreamWriter(debug_csv_file, true, Encoding.UTF8))
+                    {
+                        // 计算并写入降序排列后的数据
+                        sw.WriteLine(item.Key + "," + Math.Round(item.Value / binDataList.Count() / binDatafail.chipNum, 4));
+                    }
+                }
+            }
+
+            await Task.WhenAll(tasks); // 等待所有任务完成
+
+            if (!breakFlag)
+            {
+                DateTime endTime = DateTime.Now; // 记录结束时间
+                TimeSpan totalTime = endTime - startTime; // 计算运行时间
+                MessageBox.Show($"文件导入成功！总共耗时：{totalTime.TotalSeconds} 秒");
             }
         }
     }
