@@ -286,7 +286,7 @@ namespace 产出分布计算
 
         private Dictionary<string, Wafer> waferList = new Dictionary<string, Wafer>();
 
-        private async void importWaferFiles(string filename, int dim, int[] col2, string outputCsvFile)
+        private async void importWaferFiles(string filename, int dim, int[] col2, string outputCsvFile, string not_find_csv_file)
         {
             int flag = 0;
             string outputPath = System.IO.Path.GetDirectoryName(outputCsvFile);
@@ -359,7 +359,7 @@ namespace 产出分布计算
                 {
                     lock (parameterlockObject)
                     {
-                        parameterListBox.Items.Add(System.IO.Path.GetFileName(filename) + " 导入完成!");
+                        parameterListBox.Items.Add(filename + " 导入完成!");
                         // 滚动到最新项
                         parameterListBox.ScrollIntoView(parameterListBox.Items[parameterListBox.Items.Count - 1]);
                     }
@@ -368,11 +368,22 @@ namespace 产出分布计算
             catch (Exception ex)
             {
                 //MessageBox.Show($"读取文件时出错: {ex.Message}\n{ex.StackTrace}");
+
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    lock (parameterlockObject)
+                    {
+                        parameterListBox.Items.Add(filename + " 导入失败!");
+                        // 滚动到最新项
+                        parameterListBox.ScrollIntoView(parameterListBox.Items[parameterListBox.Items.Count - 1]);
+                    }
+                });
+
                 await Task.Run(() =>
                 {
                     lock (lockObject)
                     {
-                        using (StreamWriter sw = new StreamWriter(System.IO.Path.Combine(outputPath, "NotFindFile.csv"), true, Encoding.UTF8))
+                        using (StreamWriter sw = new StreamWriter(not_find_csv_file, true, Encoding.UTF8))
                         {
                             sw.WriteLineAsync(filename);
                         }
@@ -526,7 +537,7 @@ namespace 产出分布计算
                 string filePathTemp = System.IO.Path.Combine(filePathText, line + fileSuffix + ".csv");
                 tasks.Add(Task.Run(() =>
                 {
-                    importWaferFiles(filePathTemp, dim, col2, output_csv_file);
+                    importWaferFiles(filePathTemp, dim, col2, output_csv_file, not_find_csv_file);
                     processedLines++;
                     Progress = (int)Math.Ceiling(processedLines * 100.0 / totalLines);
                     Dispatcher.Invoke(() =>
@@ -556,7 +567,7 @@ namespace 产出分布计算
             }
             await Task.WhenAll(tasks); // 等待所有任务完成
 
-            MessageBox.Show("导入文件成功！");
+            MessageBox.Show("导入文件完成！");
 
             EnableAllButtons();
         }

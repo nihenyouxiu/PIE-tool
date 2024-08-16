@@ -1070,7 +1070,7 @@ namespace 产出分布计算
                 {
                     lock (parameterlockObject)
                     {
-                        parameterListBox.Items.Add(System.IO.Path.GetFileName(filename) + " 导入完成!");
+                        parameterListBox.Items.Add(filename + " 导入完成!");
                         // 滚动到最新项
                         parameterListBox.ScrollIntoView(parameterListBox.Items[parameterListBox.Items.Count - 1]);
                     }
@@ -1091,6 +1091,17 @@ namespace 产出分布计算
             catch (IOException)
             {
                 //MessageBox.Show($"读取文件时出错: {ex.Message}\n{ex.StackTrace}");
+
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    lock (parameterlockObject)
+                    {
+                        parameterListBox.Items.Add(filename + " 导入失败!");
+                        // 滚动到最新项
+                        parameterListBox.ScrollIntoView(parameterListBox.Items[parameterListBox.Items.Count - 1]);
+                    }
+                });
+
                 await Task.Run(() =>
                 {
                     lock (lockObject)
@@ -1305,7 +1316,7 @@ namespace 产出分布计算
             {
                 DateTime endTime = DateTime.Now; // 记录结束时间
                 TimeSpan totalTime = endTime - startTime; // 计算运行时间
-                MessageBox.Show($"文件导入成功！总共耗时：{totalTime.TotalSeconds} 秒");
+                MessageBox.Show($"文件导入完成！总共耗时：{totalTime.TotalSeconds} 秒");
             }
         }
     }
