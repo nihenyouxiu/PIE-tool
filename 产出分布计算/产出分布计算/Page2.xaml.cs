@@ -1258,23 +1258,25 @@ namespace 产出分布计算
                     {
                         if (isChecked == true)
                         {
-
                             foreach (var bintemp in binDataList)
                             {
                                 List<string> failReasons;
-                                ValidateAgainstBinDataDebug(chip, bintemp, out failReasons);
+                                bool isok = ValidateAgainstBinDataDebug(chip, bintemp, out failReasons);
 
-                                foreach (var Reason in failReasons)
+                                if (!isok)
                                 {
-                                    if (BinfailReason.ContainsKey(Reason))
+                                    foreach (var Reason in failReasons)
                                     {
-                                        BinfailReason[Reason]++;
-                                    }
-                                    else
-                                    {
-                                        BinfailReason.Add(Reason, 1);
-                                    }
+                                        if (BinfailReason.ContainsKey(Reason))
+                                        {
+                                            BinfailReason[Reason]++;
+                                        }
+                                        else
+                                        {
+                                            BinfailReason.Add(Reason, 1);
+                                        }
 
+                                    }
                                 }
                             }
                         }
@@ -1292,7 +1294,7 @@ namespace 产出分布计算
                     using (StreamWriter sw = new StreamWriter(debug_csv_file, true, Encoding.UTF8))
                     {
                         // 计算并写入降序排列后的数据
-                        sw.WriteLine(item.Key + "," + Math.Round(item.Value / binDataList.Count() / binDatafail.chipNum, 4));
+                        sw.WriteLine(item.Key + "," + Math.Round(item.Value / binDataList.Count() / totalChipNum, 4));
                     }
                 }
             }

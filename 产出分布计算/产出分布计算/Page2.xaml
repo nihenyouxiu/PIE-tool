@@ -30,7 +30,7 @@
 			<Label Content="文件名后缀" HorizontalContentAlignment="left" Width="80"/>
 			<TextBox x:Name="filenameSuffix" Text="-F" Width="100"  HorizontalContentAlignment="Left" Height="20" Margin="0,0,0,0"/>
 
-			<CheckBox  Content="调试" Name="CheckBoxDebug" Margin="10,0,0,0"  HorizontalContentAlignment="Left" VerticalAlignment="Center"/>
+			<CheckBox  Content="调试" Name="CheckBoxDebug" Margin="10,0,0,0" IsChecked="True" HorizontalContentAlignment="Left" VerticalAlignment="Center"/>
 
 		</StackPanel>
 
