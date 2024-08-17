@@ -1076,16 +1076,7 @@ namespace 产出分布计算
                     }
                 });
 
-                await Task.Run(() =>
-                {
-                    lock (lockObject)
-                    {
-                        using (StreamWriter sw = new StreamWriter(outputCsvFile, true, Encoding.UTF8))
-                        {
-                            sw.WriteLineAsync(waferData.WaferId + "," + waferData.Chips.Count());
-                        }
-                    }
-                });
+                
             }
 
             catch (IOException)
@@ -1184,7 +1175,7 @@ namespace 产出分布计算
 
             using (StreamWriter sw = new StreamWriter(output_csv_file, true, Encoding.UTF8))
             {
-                sw.WriteLine("片号,颗粒数");
+                sw.WriteLine("片号,颗粒数,落Bin颗粒数,落Bin率");
             }
 
             initalBinList(binDataList);
@@ -1250,7 +1241,8 @@ namespace 产出分布计算
             foreach (var temp in waferList)
             {
                 Wafer waferData = temp.Value;
-
+                double okChipNum = 0;
+                double WaferchipNum = waferData.Chips.Count();
                 foreach (Chip chip in waferData.Chips)
                 {
                     bool flagChipBin = false;
@@ -1261,6 +1253,7 @@ namespace 产出分布计算
                             binDataTmp.chipNum++;
                             chip.BIN = binDataTmp.binIdx;
                             flagChipBin = true;
+                            okChipNum++;
                             break;
                         }
                     }
@@ -1294,7 +1287,19 @@ namespace 产出分布计算
                         binDatafail.chipNum++;
                     }
                 }
-                totalChipNum += waferData.Chips.Count();
+
+                tasks.Add(Task.Run(() =>
+                {
+                    lock (lockObject)
+                    {
+                        using (StreamWriter sw = new StreamWriter(output_csv_file, true, Encoding.UTF8))
+                        {
+                            sw.WriteLineAsync(waferData.WaferId + "," + WaferchipNum+","+ okChipNum+","+Math.Round(okChipNum / WaferchipNum,4));
+                        }
+                    }
+                }));
+
+                totalChipNum += WaferchipNum;
             }
 
             if (isChecked == true)

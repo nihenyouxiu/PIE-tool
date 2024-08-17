@@ -241,6 +241,38 @@ namespace 产出分布计算
             Application.Current.Exit += Application_Exit; // 订阅 Exit 事件
         }
 
+        // 异步加载事件处理程序
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            await LoadFilesAsync();
+        }
+
+        List<string> list = new List<string>();
+
+        private async Task LoadFilesAsync()
+        {
+            string directoryPath = filePath.Text;
+
+            try
+            {
+                // 获取所有以 ".txt" 结尾的文件，并按文件名排序
+                var files = await Task.Run(() => Directory.GetFiles(directoryPath)
+                                     .Where(f => f.EndsWith(".csv"))
+                                     .OrderBy(f => System.IO.Path.GetFileName(f)));
+
+                foreach (string file in files)
+                {
+                    string fileName = System.IO.Path.GetFileName(file);
+                    list.Add(fileName);
+                    parameterListBox.Items.Add(fileName);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("发生错误: " + ex.Message);
+            }
+        }
+
         private void Application_Exit(object sender, ExitEventArgs e)
         {
             SaveTextBoxContent();
